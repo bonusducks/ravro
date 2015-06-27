@@ -2,6 +2,18 @@
 name = "ravro"
 version = "0.1.0"
 authors = ["Glenn McAllsiter <glenn.mcallister@gmail.com>"]
+license = "Apache-2.0"
+build = "build.rs"
+
+[features]
+default = ["with_syntex"]
+nightly = ["serde_macros"]
+with_syntex = ["syntex", "serde_codegen"]
+
+[build-dependencies]
+syntex = { version = "*", optional = true }
+serde_codegen = { version = "*", optional = true }
 
 [dependencies]
-serde = "0.4.2"
+serde = { version = "*", optional = false }
+serde_macros = { version = "*", optional = true }
