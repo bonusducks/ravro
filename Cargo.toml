@@ -1,0 +1,4 @@
+[package]
+name = "ravro"
+version = "0.1.0"
+authors = ["Glenn McAllsiter <glenn.mcallister@gmail.com>"]
