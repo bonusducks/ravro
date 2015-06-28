@@ -1,121 +1,118 @@
 
-#[derive(Serialize, Deserialize, Debug)]
-pub struct Point {
-    pub x: u32,
-    pub y: u32,
-}
 
-impl PartialEq<Point> for Point {
-    fn eq(&self, other: &Point) -> bool {
-        self.x == other.x && self.y == other.y
+
+mod schema_model {
+    extern crate serde;
+
+    use serde::json::Value;
+
+    // Because of the way Serde does JSON ser/des for enum types,
+    // I can't use an actual enumerated type as the type marker
+    // for the "simple" Avro type. I'm going to have to use a 
+    // string and do manual checking/conversion afterwards. Gah.
+
+    #[derive(Debug, Clone, PartialEq)]
+    pub enum SimpleTypeEnum {
+        Null,
+        Boolean,
+        Int,
+        Long,
+        Float,
+        Double,
+        Bytes,
+        String,
     }
 
-    fn ne(&self, other: &Point) -> bool {
-        !self.eq(&other)
-    } 
-}
+    pub type RawSimpleType = String;
 
-// Because of the way Serde does JSON ser/des for enum types,
-// I can't use an actual enumerated type as the type marker
-// for the "simple" Avro type. I'm going to have to use a 
-// string and do manual checking/conversion afterwards. Gah.
+    impl SimpleTypeEnum {
+        pub fn to_raw(&self) -> RawSimpleType {
+            match *self {
+                SimpleTypeEnum::Null    => "null".to_string(),
+                SimpleTypeEnum::Boolean => "boolean".to_string(),
+                SimpleTypeEnum::Int     => "int".to_string(),
+                SimpleTypeEnum::Long    => "long".to_string(),
+                SimpleTypeEnum::Float   => "float".to_string(),
+                SimpleTypeEnum::Double  => "double".to_string(),
+                SimpleTypeEnum::Bytes   => "bytes".to_string(),
+                SimpleTypeEnum::String  => "string".to_string(),
+            }
+        }
 
-#[derive(Debug, Clone, PartialEq)]
-pub enum SimpleTypeEnum {
-    Null,
-    Boolean,
-    Int,
-    Long,
-    Float,
-    Double,
-    Bytes,
-    String,
-}
-
-pub type RawSimpleType = String;
-
-impl SimpleTypeEnum {
-    pub fn to_raw(&self) -> RawSimpleType {
-        match *self {
-            SimpleTypeEnum::Null    => "null".to_string(),
-            SimpleTypeEnum::Boolean => "boolean".to_string(),
-            SimpleTypeEnum::Int     => "int".to_string(),
-            SimpleTypeEnum::Long    => "long".to_string(),
-            SimpleTypeEnum::Float   => "float".to_string(),
-            SimpleTypeEnum::Double  => "double".to_string(),
-            SimpleTypeEnum::Bytes   => "bytes".to_string(),
-            SimpleTypeEnum::String  => "string".to_string(),
+        pub fn from_raw(raw_type : &RawSimpleType) -> Option<SimpleTypeEnum> {
+            match raw_type.as_ref() {
+                "null"      => Some(SimpleTypeEnum::Null),
+                "boolean"   => Some(SimpleTypeEnum::Boolean),
+                "int"       => Some(SimpleTypeEnum::Int),
+                "long"      => Some(SimpleTypeEnum::Long),
+                "float"     => Some(SimpleTypeEnum::Float),
+                "double"    => Some(SimpleTypeEnum::Double),
+                "bytes"     => Some(SimpleTypeEnum::Bytes),
+                "string"    => Some(SimpleTypeEnum::String),
+                _           => None
+            }
         }
     }
 
-    pub fn from_raw(raw_type : &RawSimpleType) -> Option<SimpleTypeEnum> {
-        match raw_type.as_ref() {
-            "null"      => Some(SimpleTypeEnum::Null),
-            "boolean"   => Some(SimpleTypeEnum::Boolean),
-            "int"       => Some(SimpleTypeEnum::Int),
-            "long"      => Some(SimpleTypeEnum::Long),
-            "float"     => Some(SimpleTypeEnum::Float),
-            "double"    => Some(SimpleTypeEnum::Double),
-            "bytes"     => Some(SimpleTypeEnum::Bytes),
-            "string"    => Some(SimpleTypeEnum::String),
-            _           => None
+    #[derive(Serialize, Deserialize, Debug, PartialEq)]
+    pub struct SimpleType {
+        #[serde(rename="type")]
+        pub raw_type: RawSimpleType,
+    }
+
+    impl SimpleType {
+        pub fn is_valid(&self) -> Result<(), &'static str> {
+            match SimpleTypeEnum::from_raw(&self.raw_type) {
+                Some(..)    => Ok(()),
+                None        => Err("Not a valid simple type"),
+            }
         }
     }
-}
 
-#[derive(Serialize, Deserialize, Debug, PartialEq)]
-pub struct SimpleType {
-    #[serde(rename="type")]
-    pub raw_type: RawSimpleType,
-}
-
-impl SimpleType {
-    pub fn is_valid(&self) -> Result<(), &'static str> {
-        match SimpleTypeEnum::from_raw(&self.raw_type) {
-            Some(..)    => Ok(()),
-            None        => Err("Not a valid simple type"),
-        }
+    #[derive(Serialize, Deserialize, Debug)]
+    pub enum ComplexType {
+        Record,
     }
-}
 
-#[derive(Serialize, Deserialize, Debug)]
-pub enum ComplexType {
-    Record,
-}
+    #[derive(Serialize, Deserialize, Debug)]
+    pub enum Type {
+        Simple(SimpleType),
+        Complex(ComplexType),
+        Reference(String),
+        Array(Vec<Type>),
+    }
 
-#[derive(Serialize, Deserialize, Debug)]
-pub enum Type {
-    Simple(SimpleType),
-    Complex(ComplexType),
-    Array(Vec<Type>),
-}
+    #[derive(Serialize, Deserialize, Debug)]
+    pub enum FieldType {
+        Object(Type),
+        Name(RawSimpleType),
+    }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-pub enum SortOrder {
-    Ascending,
-    Descending,
-    Ignore,
-}
+    #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+    pub enum SortOrder {
+        Ascending,
+        Descending,
+        Ignore,
+    }
 
-#[derive(Serialize, Deserialize, Debug)]
-pub struct Field {
-    name: String,
-    doc: String, 
-    #[serde(rename="type")]
-    field_type: Type,
-    default: serde::json::Value,    // Punt. 
-    order: SortOrder,
-    aliases: Vec<String>,
-}
+    #[derive(Serialize, Deserialize, Debug)]
+    pub struct Field {
+        name: String,
+        doc: Option<String>, 
+        #[serde(rename="type")]
+        field_type: FieldType,
+        default: Option<serde::json::Value>,    // Punt. 
+        order: Option<SortOrder>,
+        aliases: Option<Vec<String>>,
+    }
 
-#[derive(Serialize, Deserialize, Debug)]
-pub struct Record {
-    #[serde(rename="type")]
-    type_name: String,
-    namespace: String,
-    doc: String,
-    aliases: Vec<String>,
-    fields: Vec<Field>,
-}
-
-
+    #[derive(Serialize, Deserialize, Debug)]
+    pub struct Record {
+        #[serde(rename="type")]
+        type_name: String,
+        namespace: Option<String>,
+        doc: Option<String>,
+        aliases: Vec<String>,
+        fields: Vec<Field>,
+    }
+} // end model mod

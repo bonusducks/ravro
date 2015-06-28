@@ -2,20 +2,8 @@
 extern crate ravro;
 extern crate serde;
 
-use ravro::*;
+use ravro::schema::*;
 use serde::json::{self};
-
-#[test]
-fn exercise_point() {
-    let point = Point { x: 1, y: 2 };
-    let ser_point = json::to_string(&point).unwrap();
-
-    assert_eq!(ser_point, "{\"x\":1,\"y\":2}");
-
-    let des_point : Point = json::from_str(&ser_point).unwrap();
-
-    assert_eq!(point, des_point);
-}
 
 #[test]
 fn ser_null_type() {
