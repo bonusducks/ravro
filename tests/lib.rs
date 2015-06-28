@@ -31,6 +31,7 @@ fn des_null_type() {
     let des_null_type : SimpleType = json::from_str(r#"{"type":"null"}"#).unwrap();
 
     assert_eq!(des_null_type, null_type);
+    assert!(des_null_type.is_valid().is_ok());
 }
 
 #[test]
@@ -47,6 +48,7 @@ fn des_boolean_type() {
     let des_bool_type : SimpleType = json::from_str(r#"{"type":"boolean"}"#).unwrap();
 
     assert_eq!(des_bool_type, bool_type);
+    assert!(des_bool_type.is_valid().is_ok());
 }
 
 #[test]
@@ -63,6 +65,7 @@ fn des_int_type() {
     let des_int_type : SimpleType = json::from_str(r#"{"type":"int"}"#).unwrap();
 
     assert_eq!(des_int_type, int_type);
+    assert!(des_int_type.is_valid().is_ok());
 }
 
 #[test]
@@ -79,6 +82,7 @@ fn des_long_type() {
     let des_long_type : SimpleType = json::from_str(r#"{"type":"long"}"#).unwrap();
 
     assert_eq!(des_long_type, long_type);
+    assert!(des_long_type.is_valid().is_ok());
 }
 
 #[test]
@@ -95,6 +99,7 @@ fn des_float_type() {
     let des_float_type : SimpleType = json::from_str(r#"{"type":"float"}"#).unwrap();
 
     assert_eq!(des_float_type, float_type);
+    assert!(des_float_type.is_valid().is_ok());
 }
 
 #[test]
@@ -111,6 +116,7 @@ fn des_double_type() {
     let des_double_type : SimpleType = json::from_str(r#"{"type":"double"}"#).unwrap();
 
     assert_eq!(des_double_type, double_type);
+    assert!(des_double_type.is_valid().is_ok());
 }
 
 #[test]
@@ -127,6 +133,7 @@ fn des_bytes_type() {
     let des_bytes_type : SimpleType = json::from_str(r#"{"type":"bytes"}"#).unwrap();
 
     assert_eq!(des_bytes_type, bytes_type);
+    assert!(des_bytes_type.is_valid().is_ok());
 }
 
 #[test]
@@ -143,6 +150,18 @@ fn des_string_type() {
     let des_string_type : SimpleType = json::from_str(r#"{"type":"string"}"#).unwrap();
 
     assert_eq!(des_string_type, string_type);
+    assert!(des_string_type.is_valid().is_ok());
+}
+
+#[test]
+fn des_bogus_type() {
+    let bogus_type = SimpleType { raw_type: "bogus".to_string() };
+    let des_bogus_type : SimpleType = json::from_str(r#"{"type":"bogus"}"#).unwrap();
+
+    // All this really tells us is that we are faithfully deserializing invalid simple types, 
+    // which need to be validated.
+    assert_eq!(des_bogus_type, bogus_type);
+    assert!(des_bogus_type.is_valid().is_err());
 }
 
 #[test]

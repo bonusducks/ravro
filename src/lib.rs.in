@@ -69,6 +69,15 @@ pub struct SimpleType {
     pub raw_type: RawSimpleType,
 }
 
+impl SimpleType {
+    pub fn is_valid(&self) -> Result<(), &'static str> {
+        match SimpleTypeEnum::from_raw(&self.raw_type) {
+            Some(..)    => Ok(()),
+            None        => Err("Not a valid simple type"),
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug)]
 pub enum ComplexType {
     Record,
