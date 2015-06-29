@@ -12,7 +12,7 @@ mod schema_model {
     // string and do manual checking/conversion afterwards. Gah.
 
     #[derive(Debug, Clone, PartialEq)]
-    pub enum SimpleTypeEnum {
+    pub enum PrimitiveTypeEnum {
         Null,
         Boolean,
         Int,
@@ -23,69 +23,74 @@ mod schema_model {
         String,
     }
 
-    pub type RawSimpleType = String;
+    pub type RawPrimitiveType = String;
 
-    impl SimpleTypeEnum {
-        pub fn to_raw(&self) -> RawSimpleType {
+    impl PrimitiveTypeEnum {
+        pub fn to_raw(&self) -> RawPrimitiveType {
             match *self {
-                SimpleTypeEnum::Null    => "null".to_string(),
-                SimpleTypeEnum::Boolean => "boolean".to_string(),
-                SimpleTypeEnum::Int     => "int".to_string(),
-                SimpleTypeEnum::Long    => "long".to_string(),
-                SimpleTypeEnum::Float   => "float".to_string(),
-                SimpleTypeEnum::Double  => "double".to_string(),
-                SimpleTypeEnum::Bytes   => "bytes".to_string(),
-                SimpleTypeEnum::String  => "string".to_string(),
+                PrimitiveTypeEnum::Null    => "null".to_string(),
+                PrimitiveTypeEnum::Boolean => "boolean".to_string(),
+                PrimitiveTypeEnum::Int     => "int".to_string(),
+                PrimitiveTypeEnum::Long    => "long".to_string(),
+                PrimitiveTypeEnum::Float   => "float".to_string(),
+                PrimitiveTypeEnum::Double  => "double".to_string(),
+                PrimitiveTypeEnum::Bytes   => "bytes".to_string(),
+                PrimitiveTypeEnum::String  => "string".to_string(),
             }
         }
 
-        pub fn from_raw(raw_type : &RawSimpleType) -> Option<SimpleTypeEnum> {
+        pub fn from_raw(raw_type : &RawPrimitiveType) -> Option<PrimitiveTypeEnum> {
             match raw_type.as_ref() {
-                "null"      => Some(SimpleTypeEnum::Null),
-                "boolean"   => Some(SimpleTypeEnum::Boolean),
-                "int"       => Some(SimpleTypeEnum::Int),
-                "long"      => Some(SimpleTypeEnum::Long),
-                "float"     => Some(SimpleTypeEnum::Float),
-                "double"    => Some(SimpleTypeEnum::Double),
-                "bytes"     => Some(SimpleTypeEnum::Bytes),
-                "string"    => Some(SimpleTypeEnum::String),
+                "null"      => Some(PrimitiveTypeEnum::Null),
+                "boolean"   => Some(PrimitiveTypeEnum::Boolean),
+                "int"       => Some(PrimitiveTypeEnum::Int),
+                "long"      => Some(PrimitiveTypeEnum::Long),
+                "float"     => Some(PrimitiveTypeEnum::Float),
+                "double"    => Some(PrimitiveTypeEnum::Double),
+                "bytes"     => Some(PrimitiveTypeEnum::Bytes),
+                "string"    => Some(PrimitiveTypeEnum::String),
                 _           => None
             }
         }
     }
 
     #[derive(Serialize, Deserialize, Debug, PartialEq)]
-    pub struct SimpleType {
+    pub struct Schema {
         #[serde(rename="type")]
-        pub raw_type: RawSimpleType,
+        type_name: String,
+        namespace: Option<String>,
+        doc: Option<String>,
+        aliases: Vec<String>,
+        fields: Vec<Field>,
     }
 
-    impl SimpleType {
+    // For now, this really only supports Primitive Types.
+    impl Schema {
         pub fn is_valid(&self) -> Result<(), &'static str> {
-            match SimpleTypeEnum::from_raw(&self.raw_type) {
+            match PrimitiveTypeEnum::from_raw(&self.type_name) {
                 Some(..)    => Ok(()),
                 None        => Err("Not a valid simple type"),
             }
         }
+
+        pub fn new(raw_type: &str) -> Result<Schema, &'static str> {
+            let raw = raw_type.to_string();
+            let schema = Schema {
+                type_name: raw,
+                namespace: None,
+                doc: None,
+                aliases: Vec::with_capacity(1),
+                fields: Vec::with_capacity(1),
+            };
+            try!(schema.is_valid());
+            Ok(schema)
+        }
     }
 
-    #[derive(Serialize, Deserialize, Debug)]
-    pub enum ComplexType {
-        Record,
-    }
-
-    #[derive(Serialize, Deserialize, Debug)]
-    pub enum Type {
-        Simple(SimpleType),
-        Complex(ComplexType),
-        Reference(String),
-        Array(Vec<Type>),
-    }
-
-    #[derive(Serialize, Deserialize, Debug)]
+    #[derive(Serialize, Deserialize, Debug, PartialEq)]
     pub enum FieldType {
-        Object(Type),
-        Name(RawSimpleType),
+        Object,
+        Name,
     }
 
     #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
@@ -95,7 +100,7 @@ mod schema_model {
         Ignore,
     }
 
-    #[derive(Serialize, Deserialize, Debug)]
+    #[derive(Serialize, Deserialize, Debug, PartialEq)]
     pub struct Field {
         name: String,
         doc: Option<String>, 
@@ -104,15 +109,5 @@ mod schema_model {
         default: Option<serde::json::Value>,    // Punt. 
         order: Option<SortOrder>,
         aliases: Option<Vec<String>>,
-    }
-
-    #[derive(Serialize, Deserialize, Debug)]
-    pub struct Record {
-        #[serde(rename="type")]
-        type_name: String,
-        namespace: Option<String>,
-        doc: Option<String>,
-        aliases: Vec<String>,
-        fields: Vec<Field>,
     }
 } // end model mod
