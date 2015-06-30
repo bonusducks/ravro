@@ -1,6 +1,4 @@
 
-
-
 mod schema_model {
     extern crate serde;
 
@@ -23,10 +21,8 @@ mod schema_model {
         String,
     }
 
-    pub type RawPrimitiveType = String;
-
     impl PrimitiveTypeEnum {
-        pub fn to_raw(&self) -> RawPrimitiveType {
+        pub fn to_string(&self) -> String {
             match *self {
                 PrimitiveTypeEnum::Null    => "null".to_string(),
                 PrimitiveTypeEnum::Boolean => "boolean".to_string(),
@@ -39,7 +35,7 @@ mod schema_model {
             }
         }
 
-        pub fn from_raw(raw_type : &RawPrimitiveType) -> Option<PrimitiveTypeEnum> {
+        pub fn from_string(raw_type : &String) -> Option<PrimitiveTypeEnum> {
             match raw_type.as_ref() {
                 "null"      => Some(PrimitiveTypeEnum::Null),
                 "boolean"   => Some(PrimitiveTypeEnum::Boolean),
@@ -58,6 +54,7 @@ mod schema_model {
     pub struct Schema {
         #[serde(rename="type")]
         type_name: String,
+        name: Option<String>,   // required for type = record|enum|fixed
         namespace: Option<String>,
         doc: Option<String>,
         aliases: Vec<String>,
@@ -67,16 +64,23 @@ mod schema_model {
     // For now, this really only supports Primitive Types.
     impl Schema {
         pub fn is_valid(&self) -> Result<(), &'static str> {
-            match PrimitiveTypeEnum::from_raw(&self.type_name) {
-                Some(..)    => Ok(()),
-                None        => Err("Not a valid simple type"),
+            //let record_type = "record".to_string();
+            match self.type_name.as_ref() {
+                "record"    => Ok(()),
+                _           =>
+                    match PrimitiveTypeEnum::from_string(&self.type_name) {
+                        Some(..)    => Ok(()),
+                        None        => Err("Not a valid simple type"),
+                    },
             }
+            
         }
 
-        pub fn new(raw_type: &str) -> Result<Schema, &'static str> {
-            let raw = raw_type.to_string();
+        pub fn new(type_str: &str) -> Result<Schema, &'static str> {
+            let tn = type_str.to_string();
             let schema = Schema {
-                type_name: raw,
+                type_name: tn,
+                name: None,
                 namespace: None,
                 doc: None,
                 aliases: Vec::with_capacity(1),
