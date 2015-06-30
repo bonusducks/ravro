@@ -19,7 +19,7 @@ fn ser_null_type() {
 fn des_null_type() {
     let null_type = schema::from_str(&"null").unwrap();
     let null_type_2 = schema::from_str(&"{\"type\":\"null\"}").unwrap();
-    let des_null_type : Schema = json::from_str(r#"{"type":"null"}"#).unwrap();
+    let des_null_type  = Schema::new(&"null").unwrap();
 
     assert_eq!(des_null_type, null_type);
     assert_eq!(des_null_type, null_type_2);
@@ -40,7 +40,7 @@ fn ser_boolean_type() {
 fn des_boolean_type() {
     let bool_type = schema::from_str(&"boolean").unwrap();
     let bool_type_2 = schema::from_str(&r#"{"type":"boolean"}"#).unwrap();
-    let des_bool_type : Schema = json::from_str(r#"{"type":"boolean"}"#).unwrap();
+    let des_bool_type = Schema::new(&"boolean").unwrap();
 
     assert_eq!(des_bool_type, bool_type);
     assert_eq!(des_bool_type, bool_type_2);
@@ -61,7 +61,7 @@ fn ser_int_type() {
 fn des_int_type() {
     let int_type = schema::from_str(&"int").unwrap();
     let int_type_2 = schema::from_str(&r#"{"type":"int"}"#).unwrap();
-    let des_int_type : Schema = json::from_str(r#"{"type":"int"}"#).unwrap();
+    let des_int_type = Schema::new(&"int").unwrap();
 
     assert_eq!(des_int_type, int_type);
     assert_eq!(des_int_type, int_type_2);
@@ -82,7 +82,7 @@ fn ser_long_type() {
 fn des_long_type() {
     let long_type = schema::from_str(&"long").unwrap();
     let long_type_2 = schema::from_str(&r#"{"type":"long"}"#).unwrap();
-    let des_long_type : Schema = json::from_str(r#"{"type":"long"}"#).unwrap();
+    let des_long_type = Schema::new(&"long").unwrap();
 
     assert_eq!(des_long_type, long_type);
     assert_eq!(des_long_type, long_type_2);
@@ -103,7 +103,7 @@ fn ser_float_type() {
 fn des_float_type() {
     let float_type = schema::from_str(&"float").unwrap();
     let float_type_2 = schema::from_str(&r#"{"type":"float"}"#).unwrap();
-    let des_float_type : Schema = json::from_str(r#"{"type":"float"}"#).unwrap();
+    let des_float_type = Schema::new(&"float").unwrap();
 
     assert_eq!(des_float_type, float_type);
     assert_eq!(des_float_type, float_type_2);
@@ -124,7 +124,7 @@ fn ser_double_type() {
 fn des_double_type() {
     let double_type = schema::from_str(&"double").unwrap();
     let double_type_2 = schema::from_str(&r#"{"type":"double"}"#).unwrap();
-    let des_double_type : Schema = json::from_str(r#"{"type":"double"}"#).unwrap();
+    let des_double_type = Schema::new(&"double").unwrap();
 
     assert_eq!(des_double_type, double_type);
     assert_eq!(des_double_type, double_type_2);
@@ -145,7 +145,7 @@ fn ser_bytes_type() {
 fn des_bytes_type() {
     let bytes_type = schema::from_str(&"bytes").unwrap();
     let bytes_type_2 = schema::from_str(&r#"{"type":"bytes"}"#).unwrap();
-    let des_bytes_type : Schema = json::from_str(r#"{"type":"bytes"}"#).unwrap();
+    let des_bytes_type = Schema::new(&"bytes").unwrap();
 
     assert_eq!(des_bytes_type, bytes_type);
     assert_eq!(des_bytes_type, bytes_type_2);
@@ -166,7 +166,7 @@ fn ser_string_type() {
 fn des_string_type() {
     let string_type = schema::from_str(&"string").unwrap();
     let string_type_2 = schema::from_str(&r#"{"type":"string"}"#).unwrap();
-    let des_string_type : Schema = json::from_str(r#"{"type":"string"}"#).unwrap();
+    let des_string_type = Schema::new(&"string").unwrap();
 
     assert_eq!(des_string_type, string_type);
     assert_eq!(des_string_type, string_type_2);
