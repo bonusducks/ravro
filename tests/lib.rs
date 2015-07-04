@@ -195,38 +195,38 @@ fn ser_record_type_1() {
 
 #[test]
 fn check_raw_simple_type_conversions() {
-    let null_raw = "null".to_string();
-    assert_eq!(null_raw, PrimitiveTypeEnum::Null.to_string());
-    assert_eq!(PrimitiveTypeEnum::Null, PrimitiveTypeEnum::from_string(&null_raw).unwrap());
+    let null_raw = "null";
+    assert_eq!(null_raw, PrimitiveTypeEnum::Null.to_str());
+    assert_eq!(PrimitiveTypeEnum::Null, PrimitiveTypeEnum::from_str(&null_raw).unwrap());
 
-    let boolean_raw = "boolean".to_string();
-    assert_eq!(boolean_raw, PrimitiveTypeEnum::Boolean.to_string());
-    assert_eq!(PrimitiveTypeEnum::Boolean, PrimitiveTypeEnum::from_string(&boolean_raw).unwrap());
+    let boolean_raw = "boolean";
+    assert_eq!(boolean_raw, PrimitiveTypeEnum::Boolean.to_str());
+    assert_eq!(PrimitiveTypeEnum::Boolean, PrimitiveTypeEnum::from_str(&boolean_raw).unwrap());
 
-    let int_raw = "int".to_string();
-    assert_eq!(int_raw, PrimitiveTypeEnum::Int.to_string());
-    assert_eq!(PrimitiveTypeEnum::Int, PrimitiveTypeEnum::from_string(&int_raw).unwrap());
+    let int_raw = "int";
+    assert_eq!(int_raw, PrimitiveTypeEnum::Int.to_str());
+    assert_eq!(PrimitiveTypeEnum::Int, PrimitiveTypeEnum::from_str(&int_raw).unwrap());
 
-    let long_raw = "long".to_string();
-    assert_eq!(long_raw, PrimitiveTypeEnum::Long.to_string());
-    assert_eq!(PrimitiveTypeEnum::Long, PrimitiveTypeEnum::from_string(&long_raw).unwrap());
+    let long_raw = "long";
+    assert_eq!(long_raw, PrimitiveTypeEnum::Long.to_str());
+    assert_eq!(PrimitiveTypeEnum::Long, PrimitiveTypeEnum::from_str(&long_raw).unwrap());
 
-    let float_raw = "float".to_string();
-    assert_eq!(float_raw, PrimitiveTypeEnum::Float.to_string());
-    assert_eq!(PrimitiveTypeEnum::Float, PrimitiveTypeEnum::from_string(&float_raw).unwrap());
+    let float_raw = "float";
+    assert_eq!(float_raw, PrimitiveTypeEnum::Float.to_str());
+    assert_eq!(PrimitiveTypeEnum::Float, PrimitiveTypeEnum::from_str(&float_raw).unwrap());
 
-    let double_raw = "double".to_string();
-    assert_eq!(double_raw, PrimitiveTypeEnum::Double.to_string());
-    assert_eq!(PrimitiveTypeEnum::Double, PrimitiveTypeEnum::from_string(&double_raw).unwrap());
+    let double_raw = "double";
+    assert_eq!(double_raw, PrimitiveTypeEnum::Double.to_str());
+    assert_eq!(PrimitiveTypeEnum::Double, PrimitiveTypeEnum::from_str(&double_raw).unwrap());
 
-    let bytes_raw = "bytes".to_string();
-    assert_eq!(bytes_raw, PrimitiveTypeEnum::Bytes.to_string());
-    assert_eq!(PrimitiveTypeEnum::Bytes, PrimitiveTypeEnum::from_string(&bytes_raw).unwrap());
+    let bytes_raw = "bytes";
+    assert_eq!(bytes_raw, PrimitiveTypeEnum::Bytes.to_str());
+    assert_eq!(PrimitiveTypeEnum::Bytes, PrimitiveTypeEnum::from_str(&bytes_raw).unwrap());
 
-    let string_raw = "string".to_string();
-    assert_eq!(string_raw, PrimitiveTypeEnum::String.to_string());
-    assert_eq!(PrimitiveTypeEnum::String, PrimitiveTypeEnum::from_string(&string_raw).unwrap());
+    let string_raw = "string";
+    assert_eq!(string_raw, PrimitiveTypeEnum::String.to_str());
+    assert_eq!(PrimitiveTypeEnum::String, PrimitiveTypeEnum::from_str(&string_raw).unwrap());
 
-    let bogus_raw = "bogus".to_string();
-    assert_eq!(None, PrimitiveTypeEnum::from_string(&bogus_raw));
+    let bogus_raw = "bogus";
+    assert_eq!(None, PrimitiveTypeEnum::from_str(&bogus_raw));
 }

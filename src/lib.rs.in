@@ -22,21 +22,21 @@ mod schema_model {
     }
 
     impl PrimitiveTypeEnum {
-        pub fn to_string(&self) -> String {
+        pub fn to_str(&self) -> &'static str {
             match *self {
-                PrimitiveTypeEnum::Null    => "null".to_string(),
-                PrimitiveTypeEnum::Boolean => "boolean".to_string(),
-                PrimitiveTypeEnum::Int     => "int".to_string(),
-                PrimitiveTypeEnum::Long    => "long".to_string(),
-                PrimitiveTypeEnum::Float   => "float".to_string(),
-                PrimitiveTypeEnum::Double  => "double".to_string(),
-                PrimitiveTypeEnum::Bytes   => "bytes".to_string(),
-                PrimitiveTypeEnum::String  => "string".to_string(),
+                PrimitiveTypeEnum::Null    => "null",
+                PrimitiveTypeEnum::Boolean => "boolean",
+                PrimitiveTypeEnum::Int     => "int",
+                PrimitiveTypeEnum::Long    => "long",
+                PrimitiveTypeEnum::Float   => "float",
+                PrimitiveTypeEnum::Double  => "double",
+                PrimitiveTypeEnum::Bytes   => "bytes",
+                PrimitiveTypeEnum::String  => "string",
             }
         }
 
-        pub fn from_string(raw_type : &String) -> Option<PrimitiveTypeEnum> {
-            match raw_type.as_ref() {
+        pub fn from_str(raw_type : &str) -> Option<PrimitiveTypeEnum> {
+            match raw_type {
                 "null"      => Some(PrimitiveTypeEnum::Null),
                 "boolean"   => Some(PrimitiveTypeEnum::Boolean),
                 "int"       => Some(PrimitiveTypeEnum::Int),
@@ -64,11 +64,11 @@ mod schema_model {
     // For now, this really only supports Primitive Types.
     impl Schema {
         pub fn is_valid(&self) -> Result<(), &'static str> {
-            //let record_type = "record".to_string();
-            match self.type_name.as_ref() {
+            let tn = self.type_name.as_ref();
+            match tn {
                 "record"    => Ok(()),
                 _           =>
-                    match PrimitiveTypeEnum::from_string(&self.type_name) {
+                    match PrimitiveTypeEnum::from_str(&tn) {
                         Some(..)    => Ok(()),
                         None        => Err("Not a valid simple type"),
                     },
@@ -77,9 +77,8 @@ mod schema_model {
         }
 
         pub fn new(type_str: &str) -> Result<Schema, &'static str> {
-            let tn = type_str.to_string();
             let schema = Schema {
-                type_name: tn,
+                type_name: type_str.to_string(),
                 name: None,
                 namespace: None,
                 doc: None,
