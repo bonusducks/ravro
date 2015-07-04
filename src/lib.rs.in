@@ -2,7 +2,7 @@
 mod schema_model {
     extern crate serde;
 
-    use serde::json::Value;
+    //use serde::json::Value;
 
     // Because of the way Serde does JSON ser/des for enum types,
     // I can't use an actual enumerated type as the type marker
@@ -77,20 +77,37 @@ mod schema_model {
         }
 
         pub fn new(type_str: &str) -> Result<Schema, &'static str> {
-            let schema = Schema {
+            let basic_schema = Schema {
                 type_name: type_str.to_string(),
                 name: None,
                 namespace: None,
                 doc: None,
+                /*
                 aliases: Vec::with_capacity(1),
                 fields: Vec::with_capacity(1),
+                */
+                aliases: Vec::new(),
+                fields: Vec::new(),
             };
-            try!(schema.is_valid());
-            Ok(schema)
+            try!(basic_schema.is_valid());
+            Ok(basic_schema)
+        }
+
+        pub fn new_rec(rec_name: &str, rec_fields: &Vec<Field>) -> Result<Schema, &'static str> {
+            let rec_schema = Schema {
+                type_name: "record".to_string(),
+                name: Some(rec_name.to_string()),
+                namespace: None,
+                doc: None,
+                aliases: Vec::new(),
+                fields: rec_fields.to_vec(),
+            };
+            try!(rec_schema.is_valid());
+            Ok(rec_schema)
         }
     }
 
-    #[derive(Serialize, Deserialize, Debug, PartialEq)]
+    #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
     pub enum FieldType {
         Object,
         Name,
@@ -103,13 +120,14 @@ mod schema_model {
         Ignore,
     }
 
-    #[derive(Serialize, Deserialize, Debug, PartialEq)]
+    #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
     pub struct Field {
         name: String,
         doc: Option<String>, 
         #[serde(rename="type")]
         field_type: FieldType,
-        default: Option<serde::json::Value>,    // Punt. 
+        //default: Option<serde::json::Value>,    // Punt. 
+        default: Option<String>,    // Punt. 
         order: Option<SortOrder>,
         aliases: Option<Vec<String>>,
     }
