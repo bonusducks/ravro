@@ -1,6 +1,8 @@
 
 mod schema_model {
     use regex::Regex;
+    use serde::json::{Value, to_value};
+    use serde::json::builder::ObjectBuilder;
 
     //use serde::json::Value;
 
@@ -50,7 +52,7 @@ mod schema_model {
         }
     }
 
-    #[derive(Serialize, Deserialize, Debug, PartialEq)]
+    #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
     pub struct Schema {
         #[serde(rename="type")]
         type_name: String,
@@ -195,7 +197,7 @@ mod schema_model {
 
                 _  => {
                     // The spec is a little vague on what to do here. Primitive types don't exactly have names,
-                    // but they kinda do, to. Namely, their type names.
+                    // but they kinda do, too. Namely, their type names.
                     name = self.type_name.as_ref();
                     ignore_ns = true;
                 }
@@ -213,27 +215,59 @@ mod schema_model {
     }
 
     #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
-    pub enum FieldType {
-        Object,
-        Name,
-    }
-
-    #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-    pub enum SortOrder {
-        Ascending,
-        Descending,
-        Ignore,
-    }
-
-    #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
     pub struct Field {
         name: String,
-        doc: Option<String>, 
         #[serde(rename="type")]
-        field_type: FieldType,
-        //default: Option<serde::json::Value>,    // Punt. 
-        default: Option<String>,    // Punt. 
-        order: Option<SortOrder>,
+        field_type: Value,          // Gah, I'm going to have to do this by hand.
+        default: Option<Value>,    // punt. 
+        doc: Option<String>, 
+        order: Option<String>,      // This should be an enum, but the serde JSON serialization does not good things 
         aliases: Option<Vec<String>>,
+    }
+
+    impl Field {
+        pub fn new(name: &str, primitive_type: &str) -> Result<Field, &'static str> {
+            let type_value = ObjectBuilder::new()
+                .insert("type".to_string(), primitive_type.to_string())
+                .unwrap();
+
+            let f = Field {
+                name: name.to_string(),
+                field_type: type_value,
+                default: None,
+                doc: None,
+                order: None,
+                aliases: None,
+            };
+            Ok(f)
+        }
+
+        pub fn new_full(name: &str, 
+                        primitive_type: &str,
+                        default: &str,
+                        doc: &str,
+                        order: &str,
+                        aliases: &Vec<String>) -> Result<Field, &'static str> {
+            let type_value = ObjectBuilder::new()
+                .insert("type".to_string(), primitive_type.to_string())
+                .unwrap();
+
+            let default_value : Option<Value> = if default.is_empty() {
+                None
+            } else {
+                let ser_val = to_value(&default);
+                Some(ser_val)
+            };
+
+            let f = Field {
+                name: name.to_string(),
+                field_type: type_value,
+                default: default_value,
+                doc: if doc.is_empty() { None } else { Some(doc.to_string()) },
+                order: if order.is_empty() { None } else { Some(order.to_string()) },
+                aliases: if aliases.len() == 0 { None } else { Some(aliases.to_vec()) },
+            };
+            Ok(f)
+        }
     }
 } // end model mod

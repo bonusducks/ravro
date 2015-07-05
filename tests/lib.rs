@@ -94,7 +94,7 @@ mod record {
     }
 
     mod ser {
-        use ravro::schema::{self};
+        use ravro::schema::{self, Field};
         use serde::json::{self};
 
         #[test]
@@ -112,6 +112,54 @@ mod record {
             let ser_rec_type = json::to_string(&rec_type).unwrap();
 
             assert_eq!(ser_rec_type, r#"{"type":"record","name":"foo","namespace":"x.y","doc":null,"aliases":[],"fields":[]}"#)
+        }
+
+        
+        #[test]
+        fn record_type_3() {
+            let json_str = r#"{ "type" : "record", 
+                                "name" : "foo", 
+                                "fields" : [{"type":"boolean", "name":"f1"}]
+                              }"#;
+            let rec_type = schema::from_str(&json_str).unwrap();
+            let ser_rec_type = json::to_string_pretty(&rec_type).unwrap();
+
+            // Single line is getting hard to read.
+            assert_eq!(ser_rec_type, 
+r#"{
+  "type": "record",
+  "name": "foo",
+  "namespace": null,
+  "doc": null,
+  "aliases": [],
+  "fields": [
+    {
+      "name": "f1",
+      "type": "boolean",
+      "default": null,
+      "doc": null,
+      "order": null,
+      "aliases": null
+    }
+  ]
+}"#);
+        }
+
+        // temporary tests to work out fields...
+        #[test]
+        fn field_type_1() {
+            let field = Field::new("f1", "boolean").unwrap();
+            let ser_field = json::to_string(&field).unwrap();
+
+            assert_eq!(ser_field, r#"{"name":"f1","type":{"type":"boolean"},"default":null,"doc":null,"order":null,"aliases":null}"#);
+        }
+
+        #[test]
+        fn field_type_2() {
+            let field = Field::new_full("f1", "boolean", "", "", "", &Vec::new()).unwrap();
+            let ser_field = json::to_string(&field).unwrap();
+
+            assert_eq!(ser_field, r#"{"name":"f1","type":{"type":"boolean"},"default":null,"doc":null,"order":null,"aliases":null}"#);
         }
     }
 
@@ -298,7 +346,7 @@ mod primitive {
         #[test]
         fn null_type() {
             let null_type = schema::from_str(&"null").unwrap();
-            let null_type_2 = schema::from_str(&"{\"type\":\"null\"}").unwrap();
+            let null_type_2 = schema::from_str(&r#"{"type":"null"}"#).unwrap();
             let des_null_type  = Schema::new(&"null").unwrap();
 
             assert_eq!(des_null_type, null_type);
