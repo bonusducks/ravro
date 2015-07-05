@@ -93,14 +93,31 @@ mod schema_model {
             Ok(basic_schema)
         }
 
-        pub fn new_rec(rec_name: &str, rec_fields: &Vec<Field>) -> Result<Schema, &'static str> {
+        pub fn new_rec(name: &str, fields: &Vec<Field>) -> Result<Schema, &'static str> {
             let rec_schema = Schema {
                 type_name: "record".to_string(),
-                name: Some(rec_name.to_string()),
+                name: Some(name.to_string()),
                 namespace: None,
                 doc: None,
                 aliases: Vec::new(),
-                fields: rec_fields.to_vec(),
+                fields: fields.to_vec(),
+            };
+            try!(rec_schema.is_valid());
+            Ok(rec_schema)
+        }
+
+        pub fn new_rec_full(name: &str,
+                            fields: &Vec<Field>,
+                            namespace: &str,
+                            doc: &str,
+                            aliases: &Vec<String>) -> Result<Schema, &'static str> {
+            let rec_schema = Schema {
+                type_name: "record".to_string(),
+                name: Some(name.to_string()),
+                namespace: if namespace.is_empty() { None } else { Some(namespace.to_string()) },
+                doc: if doc.is_empty() { None } else { Some(doc.to_string()) },
+                aliases: aliases.to_vec(),
+                fields: fields.to_vec(),
             };
             try!(rec_schema.is_valid());
             Ok(rec_schema)

@@ -81,6 +81,14 @@ mod ser {
         assert_eq!(ser_rec_type, r#"{"type":"record","name":"foo","namespace":null,"doc":null,"aliases":[],"fields":[]}"#)
     }
 
+    #[test]
+    fn record_type_2() {
+        let rec_type = schema::from_str(&r#"{"fields":[], "type":"record", "name":"foo", "namespace":"x.y"}"#).unwrap();
+        let ser_rec_type = json::to_string(&rec_type).unwrap();
+
+        assert_eq!(ser_rec_type, r#"{"type":"record","name":"foo","namespace":"x.y","doc":null,"aliases":[],"fields":[]}"#)
+    }
+
 }
 
 mod des {
@@ -207,6 +215,13 @@ mod des {
         assert_eq!(rec_type, des_rec_type);
     }
 
+    #[test]
+    fn record_type_2() {
+        let des_rec_type = schema::from_str(&r#"{"fields":[], "type":"record", "name":"foo", "namespace":"x.y"}"#).unwrap();
+        let rec_type = Schema::new_rec_full("foo",&Vec::new(),"x.y","",&Vec::new()).unwrap();
+
+        assert_eq!(rec_type, des_rec_type);
+    }
 }
 
 mod primitive {
