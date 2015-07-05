@@ -224,6 +224,17 @@ mod des {
     }
 }
 
+mod record {
+    use ravro::schema::Schema;
+
+    #[test]
+    fn must_have_name() {
+        let rec_result = Schema::new_rec("", &Vec::new());
+        assert!(rec_result.is_err());
+        assert_eq!(rec_result.unwrap_err(), "Records must have a name");
+    }
+}
+
 mod primitive {
     use ravro::schema::PrimitiveTypeEnum;
 

@@ -66,14 +66,22 @@ mod schema_model {
         pub fn is_valid(&self) -> Result<(), &'static str> {
             let tn = self.type_name.as_ref();
             match tn {
-                "record"    => Ok(()),
+                "record"    => self.is_rec_valid(),
                 _           =>
                     match PrimitiveTypeEnum::from_str(&tn) {
                         Some(..)    => Ok(()),
-                        None        => Err("Not a valid simple type"),
+                        None        => Err("Not a valid primitive type"),
                     },
             }
             
+        }
+
+        fn is_rec_valid(&self) -> Result<(), &'static str> {
+            match self.name {
+                Some(ref n) => if n.is_empty() { return Err("Records must have a name"); },
+                None    => return Err("Records must have a name"),
+            }
+            Ok(())
         }
 
         pub fn new(type_str: &str) -> Result<Schema, &'static str> {
@@ -82,10 +90,6 @@ mod schema_model {
                 name: None,
                 namespace: None,
                 doc: None,
-                /*
-                aliases: Vec::with_capacity(1),
-                fields: Vec::with_capacity(1),
-                */
                 aliases: Vec::new(),
                 fields: Vec::new(),
             };
