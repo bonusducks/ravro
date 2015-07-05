@@ -147,6 +147,15 @@ mod record {
 }
 
 mod primitive {
+    mod fullname {
+        use ravro::schema::Schema;
+
+        #[test]
+        fn int_fullname() {
+            let s = Schema::new("int").unwrap();
+            assert_eq!("int", s.fullname().unwrap());
+        }
+    }
 
     mod convert {
         use ravro::schema::PrimitiveTypeEnum;

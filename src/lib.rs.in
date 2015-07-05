@@ -150,10 +150,6 @@ mod schema_model {
                     // Sanity check. Constructors should have prevented this.
                     if name.is_empty() { return Err("Name cannot be empty"); }
 
-                    // If the name has any periods in it, the last segnamet of the name
-                    // after the last period must be treated as the proper name, and 
-                    // the elements to the left are the namespace. If there are no periods,
-                    // the whole thing is the proper name.
                     let name_segment_re = Regex::new(r#"^[A-Za-z_][A-Za-z0-9_]*$"#).unwrap();
                     
                     // Edge cases
@@ -161,6 +157,8 @@ mod schema_model {
                         return Err(NOT_WELL_FORMED_ERR);
                     }
                     
+                    // If the name has any periods in it, the name is the fullname and the
+                    // namespace attribute is ignored.
                     if name.contains(".") {
                         ignore_ns = true;   // periods in the name attribute override the namespace attribute
                         namespace_str = "";
@@ -196,7 +194,10 @@ mod schema_model {
                 }
 
                 _  => {
-                    // Nothing to do; primitive types don't have names.
+                    // The spec is a little vague on what to do here. Primitive types don't exactly have names,
+                    // but they kinda do, to. Namely, their type names.
+                    name = self.type_name.as_ref();
+                    ignore_ns = true;
                 }
             }
 
