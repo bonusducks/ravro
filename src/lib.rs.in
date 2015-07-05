@@ -1,6 +1,6 @@
 
 mod schema_model {
-    extern crate serde;
+    use regex::Regex;
 
     //use serde::json::Value;
 
@@ -78,9 +78,15 @@ mod schema_model {
 
         fn is_rec_valid(&self) -> Result<(), &'static str> {
             match self.name {
-                Some(ref n) => if n.is_empty() { return Err("Records must have a name"); },
+                Some(ref n) => {
+                    if n.is_empty() { return Err("Records must have a name"); }
+                    // try to get the schema's fullname to verify it's valid.
+                    let fn_result = self.fullname();
+                    if fn_result.is_err() { return Err(fn_result.unwrap_err()); }
+                },
                 None    => return Err("Records must have a name"),
             }
+
             Ok(())
         }
 
@@ -125,6 +131,83 @@ mod schema_model {
             };
             try!(rec_schema.is_valid());
             Ok(rec_schema)
+        }
+
+        pub fn fullname(&self) -> Result<String, &'static str> {
+            static NOT_WELL_FORMED_ERR : &'static str = "Name is not well formed";
+            let mut full_name = String::new();
+            let mut name: &str;
+            let mut namespace_str: &str = "";
+            let mut ignore_ns = false;
+
+            match self.name {
+                Some(ref n)     => name = &n,
+                None            => name = "",
+            }
+
+            match self.type_name.as_ref() {
+                "record" | "enum"  => {
+                    // Sanity check. Constructors should have prevented this.
+                    if name.is_empty() { return Err("Name cannot be empty"); }
+
+                    // If the name has any periods in it, the last segnamet of the name
+                    // after the last period must be treated as the proper name, and 
+                    // the elements to the left are the namespace. If there are no periods,
+                    // the whole thing is the proper name.
+                    let name_segment_re = Regex::new(r#"^[A-Za-z_][A-Za-z0-9_]*$"#).unwrap();
+                    
+                    // Edge cases
+                    if name.starts_with(".") || name.ends_with(".") {
+                        return Err(NOT_WELL_FORMED_ERR);
+                    }
+                    
+                    if name.contains(".") {
+                        ignore_ns = true;   // periods in the name attribute override the namespace attribute
+                        namespace_str = "";
+
+                        let ns_vec : Vec<&str> = name.split('.').collect();
+                        for ns_elem in ns_vec {
+                            if !name_segment_re.is_match(ns_elem) { return Err(NOT_WELL_FORMED_ERR); }
+                        }
+                    } else {
+                        if !name_segment_re.is_match(name) { return Err(NOT_WELL_FORMED_ERR); }
+
+                        // OK, now lets check the namespace.
+                        match self.namespace {
+                            Some(ref ns_string) => {
+                                let ns = &ns_string;
+
+                                // Edge casing again.
+                                if ns.starts_with(".") || ns.ends_with(".") { return Err(NOT_WELL_FORMED_ERR); }
+                                
+                                let ns_vec : Vec<&str> = ns.split('.').collect();
+                                for ns_elem in ns_vec {
+                                    if !name_segment_re.is_match(ns_elem) { return Err(NOT_WELL_FORMED_ERR); }
+                                }
+
+                                namespace_str = ns;
+                            },
+                            None => {
+                                ignore_ns = true;
+                                namespace_str = "";
+                            },
+                        }
+                    }
+                }
+
+                _  => {
+                    // Nothing to do; primitive types don't have names.
+                }
+            }
+
+            if !ignore_ns && !namespace_str.is_empty() {
+                full_name.push_str(namespace_str);
+                full_name.push_str(".");
+            }            
+
+            full_name.push_str(&name);
+
+            Ok(full_name)
         }
     }
 

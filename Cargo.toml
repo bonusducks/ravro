@@ -17,3 +17,4 @@ serde_codegen = { version = "*", optional = true }
 [dependencies]
 serde = { version = "*", optional = false }
 serde_macros = { version = "*", optional = true }
+regex = { version = "0.1.39", optional = false }

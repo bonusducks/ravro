@@ -4,7 +4,9 @@ use std::io;
 
 #[derive(Clone, PartialEq)]
 pub enum ErrorCode {
-	NotValidPrimitiveType,
+    Unknown,
+    NotValidPrimitiveType,
+    NotWellFormedName,
 }
 
 impl fmt::Debug for ErrorCode {
@@ -12,7 +14,9 @@ impl fmt::Debug for ErrorCode {
         use std::fmt::Debug;
 
         match *self {
-        	ErrorCode::NotValidPrimitiveType	=> "Not a valid primitiva data type".fmt(f),
+            ErrorCode::Unknown                  => "Unexpected error".fmt(f),
+            ErrorCode::NotValidPrimitiveType    => "Not a valid primitiva data type".fmt(f),
+            ErrorCode::NotWellFormedName        => "Name is not valid/well formed".fmt(f),
         }
     }
 }

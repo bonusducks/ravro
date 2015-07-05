@@ -2,6 +2,7 @@
 #![cfg_attr(feature = "nightly", plugin(serde_macros))]
 
 extern crate serde;
+extern crate regex;
 
 #[cfg(feature = "nightly")]
 include!("lib.rs.in");
