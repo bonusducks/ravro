@@ -2,7 +2,6 @@
 mod schema_model {
     use regex::Regex;
     use serde::json::{Value, to_value};
-    use serde::json::builder::ObjectBuilder;
 
     //use serde::json::Value;
 
@@ -227,9 +226,7 @@ mod schema_model {
 
     impl Field {
         pub fn new(name: &str, primitive_type: &str) -> Result<Field, &'static str> {
-            let type_value = ObjectBuilder::new()
-                .insert("type".to_string(), primitive_type.to_string())
-                .unwrap();
+            let type_value = Value::String(primitive_type.to_string());
 
             let f = Field {
                 name: name.to_string(),
@@ -248,9 +245,7 @@ mod schema_model {
                         doc: &str,
                         order: &str,
                         aliases: &Vec<String>) -> Result<Field, &'static str> {
-            let type_value = ObjectBuilder::new()
-                .insert("type".to_string(), primitive_type.to_string())
-                .unwrap();
+            let type_value = Value::String(primitive_type.to_string());
 
             let default_value : Option<Value> = if default.is_empty() {
                 None

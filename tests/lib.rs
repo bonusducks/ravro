@@ -145,13 +145,88 @@ r#"{
 }"#);
         }
 
+        #[test]
+        fn record_type_4() {
+            // this string and the one in test record_type_3() are equivalent.
+            // problem is, they won't acutally compare as equal at the moment.
+            let json_str = r#"{ "type" : "record",
+                                "name" : "foo",
+                                "fields" : [{"type":{"type":"boolean"}, "name":"f1"}]
+                              }"#;
+            let rec_type = schema::from_str(&json_str).unwrap();
+            let ser_rec_type = json::to_string_pretty(&rec_type).unwrap();
+
+            // Single line is getting hard to read.
+            assert_eq!(ser_rec_type,
+r#"{
+  "type": "record",
+  "name": "foo",
+  "namespace": null,
+  "doc": null,
+  "aliases": [],
+  "fields": [
+    {
+      "name": "f1",
+      "type": {
+        "type": "boolean"
+      },
+      "default": null,
+      "doc": null,
+      "order": null,
+      "aliases": null
+    }
+  ]
+}"#);
+        }
+
+        #[test]
+        fn record_type_5() {
+            let json_str = r#"{ "type" : "record", 
+                                "name" : "foo", 
+                                "fields" : [
+                                    {"type":"boolean", "name":"f1"},
+                                    {"name":"f2", "type":"int"}
+                                ]
+                              }"#;
+            let rec_type = schema::from_str(&json_str).unwrap();
+            let ser_rec_type = json::to_string_pretty(&rec_type).unwrap();
+
+            // Single line is getting hard to read.
+            assert_eq!(ser_rec_type, 
+r#"{
+  "type": "record",
+  "name": "foo",
+  "namespace": null,
+  "doc": null,
+  "aliases": [],
+  "fields": [
+    {
+      "name": "f1",
+      "type": "boolean",
+      "default": null,
+      "doc": null,
+      "order": null,
+      "aliases": null
+    },
+    {
+      "name": "f2",
+      "type": "int",
+      "default": null,
+      "doc": null,
+      "order": null,
+      "aliases": null
+    }
+  ]
+}"#);
+        }
+
         // temporary tests to work out fields...
         #[test]
         fn field_type_1() {
             let field = Field::new("f1", "boolean").unwrap();
             let ser_field = json::to_string(&field).unwrap();
 
-            assert_eq!(ser_field, r#"{"name":"f1","type":{"type":"boolean"},"default":null,"doc":null,"order":null,"aliases":null}"#);
+            assert_eq!(ser_field, r#"{"name":"f1","type":"boolean","default":null,"doc":null,"order":null,"aliases":null}"#);
         }
 
         #[test]
@@ -159,12 +234,12 @@ r#"{
             let field = Field::new_full("f1", "boolean", "", "", "", &Vec::new()).unwrap();
             let ser_field = json::to_string(&field).unwrap();
 
-            assert_eq!(ser_field, r#"{"name":"f1","type":{"type":"boolean"},"default":null,"doc":null,"order":null,"aliases":null}"#);
+            assert_eq!(ser_field, r#"{"name":"f1","type":"boolean","default":null,"doc":null,"order":null,"aliases":null}"#);
         }
     }
 
     mod des {
-        use ravro::schema::{self, Schema};
+        use ravro::schema::{self, Schema, Field};
 
         #[test]
         fn record_type_1() {
@@ -190,6 +265,38 @@ r#"{
             let err = des_rec_result.unwrap_err();
             let err_msg = format!("{:?}", err); // there's got to be a better way to do this.
             assert!(err_msg.contains("Name is not valid/well formed"));
+        }
+
+        #[test]
+        fn record_type_3() {
+            let json_str = r#"{ "type" : "record", 
+                                "name" : "foo", 
+                                "fields" : [{"type":"boolean", "name":"f1"}]
+                              }"#;
+            let des_rec_type = schema::from_str(&json_str).unwrap();
+            let field = Field::new("f1", "boolean").unwrap();
+            let field_vec = vec![field];
+            let rec_type = Schema::new_rec_full("foo", &field_vec, "", "", &Vec::new()).unwrap();
+
+            assert_eq!(rec_type, des_rec_type);
+        }
+
+        #[test]
+        fn record_type_5() {
+            let json_str = r#"{ "type" : "record", 
+                                "name" : "foo", 
+                                "fields" : [
+                                    {"type":"boolean", "name":"f1"},
+                                    {"name":"f2", "type":"int"}
+                                ]
+                              }"#;
+            let des_rec_type = schema::from_str(&json_str).unwrap();
+            let field1 = Field::new("f1", "boolean").unwrap();
+            let field2 = Field::new("f2", "int").unwrap();
+            let field_vec = vec![field1, field2];
+            let rec_type = Schema::new_rec_full("foo", &field_vec, "", "", &Vec::new()).unwrap();
+
+            assert_eq!(rec_type, des_rec_type);
         }
     }
 }
