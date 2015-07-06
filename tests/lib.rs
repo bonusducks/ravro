@@ -95,7 +95,7 @@ mod record {
 
     mod ser {
         use ravro::schema::{self, Field};
-        use serde::json::{self};
+        use serde::json::{self, Value};
 
         #[test]
         fn record_type_1() {
@@ -231,10 +231,18 @@ r#"{
 
         #[test]
         fn field_type_2() {
-            let field = Field::new_full("f1", "boolean", "", "", "", &Vec::new()).unwrap();
+            let field = Field::new_full("f1", "boolean", &None, "", "", &Vec::new()).unwrap();
             let ser_field = json::to_string(&field).unwrap();
 
             assert_eq!(ser_field, r#"{"name":"f1","type":"boolean","default":null,"doc":null,"order":null,"aliases":null}"#);
+        }
+
+        #[test]
+        fn field_type_3() {
+            let field = Field::new_full("f1", "boolean", &Some(Value::Bool(true)), "some docs", "descending", &Vec::new()).unwrap();
+            let ser_field = json::to_string(&field).unwrap();
+
+            assert_eq!(ser_field, r#"{"name":"f1","type":"boolean","default":true,"doc":"some docs","order":"descending","aliases":null}"#);
         }
     }
 

@@ -1,7 +1,7 @@
 
 mod schema_model {
     use regex::Regex;
-    use serde::json::{Value, to_value};
+    use serde::json::Value;
 
     //use serde::json::Value;
 
@@ -241,23 +241,15 @@ mod schema_model {
 
         pub fn new_full(name: &str, 
                         primitive_type: &str,
-                        default: &str,
+                        default: &Option<Value>,
                         doc: &str,
                         order: &str,
                         aliases: &Vec<String>) -> Result<Field, &'static str> {
             let type_value = Value::String(primitive_type.to_string());
-
-            let default_value : Option<Value> = if default.is_empty() {
-                None
-            } else {
-                let ser_val = to_value(&default);
-                Some(ser_val)
-            };
-
             let f = Field {
                 name: name.to_string(),
                 field_type: type_value,
-                default: default_value,
+                default: default.clone(),
                 doc: if doc.is_empty() { None } else { Some(doc.to_string()) },
                 order: if order.is_empty() { None } else { Some(order.to_string()) },
                 aliases: if aliases.len() == 0 { None } else { Some(aliases.to_vec()) },
