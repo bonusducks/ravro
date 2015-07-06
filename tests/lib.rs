@@ -184,8 +184,8 @@ r#"{
             let json_str = r#"{ "type" : "record", 
                                 "name" : "foo", 
                                 "fields" : [
-                                    {"type":"boolean", "name":"f1"},
-                                    {"name":"f2", "type":"int"}
+                                    {"type":"boolean", "name":"f1", "default": false},
+                                    {"name":"f2", "type":"int", "aliases":["a","b"]}
                                 ]
                               }"#;
             let rec_type = schema::from_str(&json_str).unwrap();
@@ -203,7 +203,7 @@ r#"{
     {
       "name": "f1",
       "type": "boolean",
-      "default": null,
+      "default": false,
       "doc": null,
       "order": null,
       "aliases": null
@@ -214,7 +214,10 @@ r#"{
       "default": null,
       "doc": null,
       "order": null,
-      "aliases": null
+      "aliases": [
+        "a",
+        "b"
+      ]
     }
   ]
 }"#);
@@ -244,10 +247,23 @@ r#"{
 
             assert_eq!(ser_field, r#"{"name":"f1","type":"boolean","default":true,"doc":"some docs","order":"descending","aliases":null}"#);
         }
+
+        #[test]
+        fn field_type_4() {
+            let mut aliases : Vec<String> = Vec::new();
+            aliases.push("a".to_string());
+            aliases.push("b".to_string());
+
+            let field = Field::new_full("f1", "boolean", &Some(Value::Bool(false)), "", "", &aliases).unwrap();
+            let ser_field = json::to_string(&field).unwrap();
+
+            assert_eq!(ser_field, r#"{"name":"f1","type":"boolean","default":false,"doc":null,"order":null,"aliases":["a","b"]}"#);
+        }
     }
 
     mod des {
         use ravro::schema::{self, Schema, Field};
+        use serde::json::{Value};
 
         #[test]
         fn record_type_1() {
@@ -294,13 +310,17 @@ r#"{
             let json_str = r#"{ "type" : "record", 
                                 "name" : "foo", 
                                 "fields" : [
-                                    {"type":"boolean", "name":"f1"},
-                                    {"name":"f2", "type":"int"}
+                                    {"type":"boolean", "name":"f1", "default":false},
+                                    {"name":"f2", "type":"int", "aliases":["a","b"]}
                                 ]
                               }"#;
             let des_rec_type = schema::from_str(&json_str).unwrap();
-            let field1 = Field::new("f1", "boolean").unwrap();
-            let field2 = Field::new("f2", "int").unwrap();
+
+            let field1 = Field::new_full("f1", "boolean", &Some(Value::Bool(false)), "", "", &Vec::new()).unwrap();
+            let mut alias_vec : Vec<String> = Vec::new();
+            alias_vec.push("a".to_string());
+            alias_vec.push("b".to_string());
+            let field2 = Field::new_full("f2", "int", &None, "", "", &alias_vec).unwrap();
             let field_vec = vec![field1, field2];
             let rec_type = Schema::new_rec_full("foo", &field_vec, "", "", &Vec::new()).unwrap();
 
