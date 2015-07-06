@@ -2,6 +2,30 @@
 extern crate ravro;
 extern crate serde;
 
+mod enum_type {
+    mod fullname {
+        use ravro::schema::Schema;
+
+        #[test]
+        fn must_have_name() {
+            let enum_result = Schema::new_enum("", &vec!["A1"]);
+            assert!(enum_result.is_err());
+            assert_eq!(enum_result.unwrap_err(), "Enums must have a name");
+        }
+
+        // Enums share the same code paths for the rest of fullname as records, so
+        // I'm not going to repeat all the tests.
+    }
+
+    mod ser {
+
+    }
+
+    mod des {
+
+    }
+}
+
 mod record {
     mod fullname {
         use ravro::schema::Schema;

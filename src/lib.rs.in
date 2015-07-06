@@ -68,6 +68,7 @@ mod schema_model {
             let tn = self.type_name.as_ref();
             match tn {
                 "record"    => self.is_rec_valid(),
+                "enum"      => self.is_enum_valid(),
                 _           =>
                     match PrimitiveTypeEnum::from_str(&tn) {
                         Some(..)    => Ok(()),
@@ -87,6 +88,22 @@ mod schema_model {
                 },
                 None    => return Err("Records must have a name"),
             }
+
+            Ok(())
+        }
+
+        fn is_enum_valid(&self) -> Result<(), &'static str> {
+            match self.name {
+                Some(ref n) => {
+                    if n.is_empty() { return Err("Enums must have a name"); }
+                    // try to get the schema's fullname to verify it's valid.
+                    let fn_result = self.fullname();
+                    if fn_result.is_err() { return Err(fn_result.unwrap_err()); }
+                },
+                None    => return Err("Enums must have a name"),
+            }
+
+            // TODO - there must be at lest one symbol.
 
             Ok(())
         }
@@ -132,6 +149,19 @@ mod schema_model {
             };
             try!(rec_schema.is_valid());
             Ok(rec_schema)
+        }
+
+        pub fn new_enum(name: &str, symbols: &Vec<&str>) -> Result<Schema, &'static str> {
+            let enum_schema = Schema {
+                type_name: "enum".to_string(),
+                name: Some(name.to_string()),
+                namespace: None,
+                doc: None,
+                aliases: Vec::new(),
+                fields: Vec::new(),
+            };
+            try!(enum_schema.is_valid());
+            Ok(enum_schema)
         }
 
         pub fn fullname(&self) -> Result<String, &'static str> {
