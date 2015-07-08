@@ -52,7 +52,7 @@ mod schema_model {
     }
 
     #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
-    pub struct Schema {
+    pub struct SchemaOld {
         #[serde(rename="type")]
         type_name: String,
         name: Option<String>,   // required for type = record|enum|fixed
@@ -63,7 +63,7 @@ mod schema_model {
     }
 
     // For now, this really only supports Primitive Types.
-    impl Schema {
+    impl SchemaOld {
         pub fn is_valid(&self) -> Result<(), &'static str> {
             let tn = self.type_name.as_ref();
             match tn {
@@ -82,7 +82,7 @@ mod schema_model {
             match self.name {
                 Some(ref n) => {
                     if n.is_empty() { return Err("Records must have a name"); }
-                    // try to get the schema's fullname to verify it's valid.
+                    // try to get the SchemaOld's fullname to verify it's valid.
                     let fn_result = self.fullname();
                     if fn_result.is_err() { return Err(fn_result.unwrap_err()); }
                 },
@@ -96,7 +96,7 @@ mod schema_model {
             match self.name {
                 Some(ref n) => {
                     if n.is_empty() { return Err("Enums must have a name"); }
-                    // try to get the schema's fullname to verify it's valid.
+                    // try to get the SchemaOld's fullname to verify it's valid.
                     let fn_result = self.fullname();
                     if fn_result.is_err() { return Err(fn_result.unwrap_err()); }
                 },
@@ -108,8 +108,8 @@ mod schema_model {
             Ok(())
         }
 
-        pub fn new(type_str: &str) -> Result<Schema, &'static str> {
-            let basic_schema = Schema {
+        pub fn new(type_str: &str) -> Result<SchemaOld, &'static str> {
+            let basic_schema = SchemaOld {
                 type_name: type_str.to_string(),
                 name: None,
                 namespace: None,
@@ -121,8 +121,8 @@ mod schema_model {
             Ok(basic_schema)
         }
 
-        pub fn new_rec(name: &str, fields: &Vec<Field>) -> Result<Schema, &'static str> {
-            let rec_schema = Schema {
+        pub fn new_rec(name: &str, fields: &Vec<Field>) -> Result<SchemaOld, &'static str> {
+            let rec_schema = SchemaOld {
                 type_name: "record".to_string(),
                 name: Some(name.to_string()),
                 namespace: None,
@@ -138,8 +138,8 @@ mod schema_model {
                             fields: &Vec<Field>,
                             namespace: &str,
                             doc: &str,
-                            aliases: &Vec<String>) -> Result<Schema, &'static str> {
-            let rec_schema = Schema {
+                            aliases: &Vec<String>) -> Result<SchemaOld, &'static str> {
+            let rec_schema = SchemaOld {
                 type_name: "record".to_string(),
                 name: Some(name.to_string()),
                 namespace: if namespace.is_empty() { None } else { Some(namespace.to_string()) },
@@ -151,8 +151,8 @@ mod schema_model {
             Ok(rec_schema)
         }
 
-        pub fn new_enum(name: &str, symbols: &Vec<&str>) -> Result<Schema, &'static str> {
-            let enum_schema = Schema {
+        pub fn new_enum(name: &str, symbols: &Vec<&str>) -> Result<SchemaOld, &'static str> {
+            let enum_schema = SchemaOld {
                 type_name: "enum".to_string(),
                 name: Some(name.to_string()),
                 namespace: None,

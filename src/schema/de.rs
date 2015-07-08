@@ -3,11 +3,11 @@ use schema_model::*;
 use serde::json::{self};
 use super::error::{Error, ErrorCode};
 
-/// Decodes an Avro schema from a `&str`.
-pub fn from_str(s: &str) -> Result<Schema, Error>  
+/// Decodes an Avro SchemaOld from a `&str`.
+pub fn from_str(s: &str) -> Result<SchemaOld, Error>  
 {
     if s.starts_with("{") || s.starts_with("[") {
-        let res : Schema = json::from_str(&s).unwrap();
+        let res : SchemaOld = json::from_str(&s).unwrap();
         let is_valid = res.is_valid();
 
         if is_valid.is_err() {
@@ -27,7 +27,7 @@ pub fn from_str(s: &str) -> Result<Schema, Error>
         }
         Ok(res)
     } else {
-        let res = Schema::new(&s);
+        let res = SchemaOld::new(&s);
         if res.is_err() { return Err(Error::SyntaxError(ErrorCode::NotValidPrimitiveType, 0, 0)) }
         Ok(res.unwrap())
     }

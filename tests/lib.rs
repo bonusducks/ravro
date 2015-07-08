@@ -4,11 +4,11 @@ extern crate serde;
 
 mod enum_type {
     mod fullname {
-        use ravro::schema::Schema;
+        use ravro::schema::SchemaOld;
 
         #[test]
         fn must_have_name() {
-            let enum_result = Schema::new_enum("", &vec!["A1"]);
+            let enum_result = SchemaOld::new_enum("", &vec!["A1"]);
             assert!(enum_result.is_err());
             assert_eq!(enum_result.unwrap_err(), "Enums must have a name");
         }
@@ -28,18 +28,18 @@ mod enum_type {
 
 mod record {
     mod fullname {
-        use ravro::schema::Schema;
+        use ravro::schema::SchemaOld;
 
         #[test]
         fn must_have_name() {
-            let rec_result = Schema::new_rec("", &Vec::new());
+            let rec_result = SchemaOld::new_rec("", &Vec::new());
             assert!(rec_result.is_err());
             assert_eq!(rec_result.unwrap_err(), "Records must have a name");
         }
 
         #[test]
         fn well_formed_name() {
-            let rec_result = Schema::new_rec("foo_bar_123", &Vec::new());
+            let rec_result = SchemaOld::new_rec("foo_bar_123", &Vec::new());
             assert!(rec_result.is_ok());
 
             let rec = rec_result.unwrap();
@@ -48,7 +48,7 @@ mod record {
 
         #[test]
         fn invalid_name() {
-            let rec_result = Schema::new_rec("foo_bar_%%%", &Vec::new());
+            let rec_result = SchemaOld::new_rec("foo_bar_%%%", &Vec::new());
             assert!(rec_result.is_err());
 
             let err = rec_result.unwrap_err();
@@ -57,7 +57,7 @@ mod record {
 
         #[test]
         fn name_cant_end_with_period() {
-            let rec_result = Schema::new_rec("foo.", &Vec::new());
+            let rec_result = SchemaOld::new_rec("foo.", &Vec::new());
             assert!(rec_result.is_err());
 
             let err = rec_result.unwrap_err();
@@ -66,7 +66,7 @@ mod record {
 
         #[test]
         fn name_cant_start_with_period() {
-            let rec_result = Schema::new_rec(".foo", &Vec::new());
+            let rec_result = SchemaOld::new_rec(".foo", &Vec::new());
             assert!(rec_result.is_err());
 
             let err = rec_result.unwrap_err();
@@ -75,7 +75,7 @@ mod record {
 
         #[test]
         fn name_is_fullname() {
-            let rec_result = Schema::new_rec("x.y.foo", &Vec::new());
+            let rec_result = SchemaOld::new_rec("x.y.foo", &Vec::new());
             assert!(rec_result.is_ok());
 
             let rec = rec_result.unwrap();
@@ -84,7 +84,7 @@ mod record {
 
         #[test]
         fn name_and_namespace() {
-            let rec_type = Schema::new_rec_full("foo",&Vec::new(),"x.y","",&Vec::new()).unwrap();
+            let rec_type = SchemaOld::new_rec_full("foo",&Vec::new(),"x.y","",&Vec::new()).unwrap();
             let fullname = rec_type.fullname().unwrap();
 
             assert_eq!("x.y.foo", fullname);
@@ -92,7 +92,7 @@ mod record {
 
         #[test]
         fn ignore_namespace() {
-            let rec_type = Schema::new_rec_full("x.y.foo",&Vec::new(),"a.b","",&Vec::new()).unwrap();
+            let rec_type = SchemaOld::new_rec_full("x.y.foo",&Vec::new(),"a.b","",&Vec::new()).unwrap();
             let fullname = rec_type.fullname().unwrap();
 
             assert_eq!("x.y.foo", fullname);
@@ -100,7 +100,7 @@ mod record {
 
         #[test]
         fn namespace_cant_start_with_period() {
-            let rec_type_result = Schema::new_rec_full("foo",&Vec::new(),".x.y","",&Vec::new());
+            let rec_type_result = SchemaOld::new_rec_full("foo",&Vec::new(),".x.y","",&Vec::new());
             assert!(rec_type_result.is_err());
 
             let err = rec_type_result.unwrap_err();
@@ -109,7 +109,7 @@ mod record {
 
         #[test]
         fn namespace_cant_end_with_period() {
-            let rec_type_result = Schema::new_rec_full("foo",&Vec::new(),"x.y.","",&Vec::new());
+            let rec_type_result = SchemaOld::new_rec_full("foo",&Vec::new(),"x.y.","",&Vec::new());
             assert!(rec_type_result.is_err());
 
             let err = rec_type_result.unwrap_err();
@@ -118,7 +118,7 @@ mod record {
     }
 
     mod ser {
-        use ravro::schema::{self, Field};
+        use ravro::schema::{self, SchemaOld, Field};
         use serde::json::{self, Value};
 
         #[test]
@@ -286,13 +286,13 @@ r#"{
     }
 
     mod des {
-        use ravro::schema::{self, Schema, Field};
+        use ravro::schema::{self, SchemaOld, Field};
         use serde::json::{Value};
 
         #[test]
         fn record_type_1() {
             let des_rec_type = schema::from_str(&r#"{"fields":[], "type":"record", "name":"foo"}"#).unwrap();
-            let rec_type = Schema::new_rec("foo",&Vec::new()).unwrap();
+            let rec_type = SchemaOld::new_rec("foo",&Vec::new()).unwrap();
 
             assert_eq!(rec_type, des_rec_type);
         }
@@ -300,7 +300,7 @@ r#"{
         #[test]
         fn record_type_2() {
             let des_rec_type = schema::from_str(&r#"{"fields":[], "type":"record", "name":"foo", "namespace":"x.y"}"#).unwrap();
-            let rec_type = Schema::new_rec_full("foo",&Vec::new(),"x.y","",&Vec::new()).unwrap();
+            let rec_type = SchemaOld::new_rec_full("foo",&Vec::new(),"x.y","",&Vec::new()).unwrap();
 
             assert_eq!(rec_type, des_rec_type);
         }
@@ -324,7 +324,7 @@ r#"{
             let des_rec_type = schema::from_str(&json_str).unwrap();
             let field = Field::new("f1", "boolean").unwrap();
             let field_vec = vec![field];
-            let rec_type = Schema::new_rec_full("foo", &field_vec, "", "", &Vec::new()).unwrap();
+            let rec_type = SchemaOld::new_rec_full("foo", &field_vec, "", "", &Vec::new()).unwrap();
 
             assert_eq!(rec_type, des_rec_type);
         }
@@ -346,7 +346,7 @@ r#"{
             alias_vec.push("b".to_string());
             let field2 = Field::new_full("f2", "int", &None, "", "", &alias_vec).unwrap();
             let field_vec = vec![field1, field2];
-            let rec_type = Schema::new_rec_full("foo", &field_vec, "", "", &Vec::new()).unwrap();
+            let rec_type = SchemaOld::new_rec_full("foo", &field_vec, "", "", &Vec::new()).unwrap();
 
             assert_eq!(rec_type, des_rec_type);
         }
@@ -355,11 +355,11 @@ r#"{
 
 mod primitive {
     mod fullname {
-        use ravro::schema::Schema;
+        use ravro::schema::SchemaOld;
 
         #[test]
         fn int_fullname() {
-            let s = Schema::new("int").unwrap();
+            let s = SchemaOld::new("int").unwrap();
             assert_eq!("int", s.fullname().unwrap());
         }
     }
@@ -500,13 +500,13 @@ mod primitive {
     }
 
     mod des {
-        use ravro::schema::{self, Schema};
+        use ravro::schema::{self, SchemaOld};
 
         #[test]
         fn null_type() {
             let null_type = schema::from_str(&"null").unwrap();
             let null_type_2 = schema::from_str(&r#"{"type":"null"}"#).unwrap();
-            let des_null_type  = Schema::new(&"null").unwrap();
+            let des_null_type  = SchemaOld::new(&"null").unwrap();
 
             assert_eq!(des_null_type, null_type);
             assert_eq!(des_null_type, null_type_2);
@@ -519,7 +519,7 @@ mod primitive {
         fn boolean_type() {
             let bool_type = schema::from_str(&"boolean").unwrap();
             let bool_type_2 = schema::from_str(&r#"{"type":"boolean"}"#).unwrap();
-            let des_bool_type = Schema::new(&"boolean").unwrap();
+            let des_bool_type = SchemaOld::new(&"boolean").unwrap();
 
             assert_eq!(des_bool_type, bool_type);
             assert_eq!(des_bool_type, bool_type_2);
@@ -532,7 +532,7 @@ mod primitive {
         fn int_type() {
             let int_type = schema::from_str(&"int").unwrap();
             let int_type_2 = schema::from_str(&r#"{"type":"int"}"#).unwrap();
-            let des_int_type = Schema::new(&"int").unwrap();
+            let des_int_type = SchemaOld::new(&"int").unwrap();
 
             assert_eq!(des_int_type, int_type);
             assert_eq!(des_int_type, int_type_2);
@@ -545,7 +545,7 @@ mod primitive {
         fn long_type() {
             let long_type = schema::from_str(&"long").unwrap();
             let long_type_2 = schema::from_str(&r#"{"type":"long"}"#).unwrap();
-            let des_long_type = Schema::new(&"long").unwrap();
+            let des_long_type = SchemaOld::new(&"long").unwrap();
 
             assert_eq!(des_long_type, long_type);
             assert_eq!(des_long_type, long_type_2);
@@ -558,7 +558,7 @@ mod primitive {
         fn float_type() {
             let float_type = schema::from_str(&"float").unwrap();
             let float_type_2 = schema::from_str(&r#"{"type":"float"}"#).unwrap();
-            let des_float_type = Schema::new(&"float").unwrap();
+            let des_float_type = SchemaOld::new(&"float").unwrap();
 
             assert_eq!(des_float_type, float_type);
             assert_eq!(des_float_type, float_type_2);
@@ -571,7 +571,7 @@ mod primitive {
         fn double_type() {
             let double_type = schema::from_str(&"double").unwrap();
             let double_type_2 = schema::from_str(&r#"{"type":"double"}"#).unwrap();
-            let des_double_type = Schema::new(&"double").unwrap();
+            let des_double_type = SchemaOld::new(&"double").unwrap();
 
             assert_eq!(des_double_type, double_type);
             assert_eq!(des_double_type, double_type_2);
@@ -584,7 +584,7 @@ mod primitive {
         fn bytes_type() {
             let bytes_type = schema::from_str(&"bytes").unwrap();
             let bytes_type_2 = schema::from_str(&r#"{"type":"bytes"}"#).unwrap();
-            let des_bytes_type = Schema::new(&"bytes").unwrap();
+            let des_bytes_type = SchemaOld::new(&"bytes").unwrap();
 
             assert_eq!(des_bytes_type, bytes_type);
             assert_eq!(des_bytes_type, bytes_type_2);
@@ -597,7 +597,7 @@ mod primitive {
         fn string_type() {
             let string_type = schema::from_str(&"string").unwrap();
             let string_type_2 = schema::from_str(&r#"{"type":"string"}"#).unwrap();
-            let des_string_type = Schema::new(&"string").unwrap();
+            let des_string_type = SchemaOld::new(&"string").unwrap();
 
             assert_eq!(des_string_type, string_type);
             assert_eq!(des_string_type, string_type_2);
