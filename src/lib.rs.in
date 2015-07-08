@@ -3,6 +3,37 @@ mod schema_model {
     use regex::Regex;
     use serde::json::Value;
 
+    pub type PrimitiveType = String;
+
+    #[derive(Clone, PartialEq)]
+    pub enum Schema {
+        Null,
+        String(String),
+        Array(Vec<Schema>),
+        Object(Value)
+    }
+
+    impl Schema {
+        pub fn is_primitive(&self) -> bool {
+            match *self {
+                Schema::String(ref s) => {
+                    match s.as_ref() {
+                        "null" | "boolean" | "int" | "long" | "float" | "double" | "bytes" | "string" => true,
+                        _ => false,
+                    }
+                },
+                _ => false,
+            }
+        }
+
+        pub fn is_array(&self) -> bool {
+            match *self {
+                Schema::Array(..)   => true,
+                _ => false,
+            }
+        }
+    }
+
     //use serde::json::Value;
 
     // Because of the way Serde does JSON ser/des for enum types,
@@ -151,6 +182,7 @@ mod schema_model {
             Ok(rec_schema)
         }
 
+        /*
         pub fn new_enum(name: &str, symbols: &Vec<&str>) -> Result<SchemaOld, &'static str> {
             let enum_schema = SchemaOld {
                 type_name: "enum".to_string(),
@@ -163,6 +195,7 @@ mod schema_model {
             try!(enum_schema.is_valid());
             Ok(enum_schema)
         }
+        */
 
         pub fn fullname(&self) -> Result<String, &'static str> {
             static NOT_WELL_FORMED_ERR : &'static str = "Name is not well formed";

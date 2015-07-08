@@ -2,6 +2,7 @@
 extern crate ravro;
 extern crate serde;
 
+/*
 mod enum_type {
     mod fullname {
         use ravro::schema::SchemaOld;
@@ -25,7 +26,9 @@ mod enum_type {
 
     }
 }
+*/
 
+/*
 mod record {
     mod fullname {
         use ravro::schema::SchemaOld;
@@ -352,8 +355,74 @@ r#"{
         }
     }
 }
+*/
 
 mod primitive {
+    mod is_primitive {
+        use ravro::schema::Schema;
+
+        #[test]
+        fn is_bool() {
+            let s = Schema::String("boolean".to_string());
+            assert!(s.is_primitive());
+        }
+
+        #[test]
+        fn is_null() {
+            let s = Schema::String("null".to_string());
+            assert!(s.is_primitive());
+        }
+
+        #[test]
+        fn is_int() {
+            let s = Schema::String("int".to_string());
+            assert!(s.is_primitive());
+        }
+
+        #[test]
+        fn is_long() {
+            let s = Schema::String("long".to_string());
+            assert!(s.is_primitive());
+        }
+
+        #[test]
+        fn is_float() {
+            let s = Schema::String("float".to_string());
+            assert!(s.is_primitive());
+        }
+
+        #[test]
+        fn is_double() {
+            let s = Schema::String("double".to_string());
+            assert!(s.is_primitive());
+        }
+
+        #[test]
+        fn is_bytes() {
+            let s = Schema::String("bytes".to_string());
+            assert!(s.is_primitive());
+        }
+
+        #[test]
+        fn is_string() {
+            let s = Schema::String("string".to_string());
+            assert!(s.is_primitive());
+        }
+
+        #[test]
+        fn is_not_primitive_string() {
+            let s = Schema::String("bogus".to_string());
+            assert_eq!(s.is_primitive(), false);
+        }
+
+        #[test]
+        fn array_is_not_primitive() {
+            let a = Schema::Array(vec!());
+            assert_eq!(a.is_primitive(), false);
+        }
+    }
+
+    /*
     mod fullname {
         use ravro::schema::SchemaOld;
 
@@ -613,6 +682,38 @@ mod primitive {
 
             let bogus_type_2 = schema::from_str(&r#"{"type":"bogus"}"#);
             assert!(bogus_type_2.is_err());
+        }
+    }
+    */
+}
+
+mod array {
+    mod is_array {
+        use ravro::schema::Schema;
+
+        #[test]
+        fn is_simple_array() {
+            let s1 = Schema::String("boolean".to_string());
+            let s2 = Schema::String("int".to_string());
+
+            let arr_schema = Schema::Array(vec!(s1, s2));
+
+            assert!(arr_schema.is_array());
+        }
+
+        #[test]
+        fn is_empty_array() {
+            // I haven't seen anything that says an empty Avro array is illegal, although
+            // it certainly would be very useufl...
+            let arr_schema = Schema::Array(vec!());
+
+            assert!(arr_schema.is_array());
+        }
+
+        #[test]
+        fn primitive_is_not_array() {
+            let s = Schema::String("boolean".to_string());
+            assert_eq!(s.is_array(), false);
         }
     }
 }
