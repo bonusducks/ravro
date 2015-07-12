@@ -28,7 +28,14 @@ mod schema_model {
 
         pub fn is_array(&self) -> bool {
             match *self {
-                Schema::Array(..)   => true,
+                Schema::Array(_)   => true,
+                _ => false,
+            }
+        }
+
+        pub fn is_object(&self) -> bool {
+            match *self {
+                Schema::Object(_) => true,
                 _ => false,
             }
         }

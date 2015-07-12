@@ -360,6 +360,7 @@ r#"{
 mod primitive {
     mod is_primitive {
         use ravro::schema::Schema;
+        use serde::json::{self, Value};
 
         #[test]
         fn is_bool() {
@@ -419,6 +420,14 @@ mod primitive {
         fn array_is_not_primitive() {
             let a = Schema::Array(vec!());
             assert_eq!(a.is_primitive(), false);
+        }
+
+        #[test]
+        fn object_is_not_primitive() {
+            let val : Value = json::from_str(r#"{"type":"string"}"#).unwrap(); // about as simple an object as we can get
+            let s = Schema::Object(val);
+
+            assert_eq!(s.is_primitive(), false);
         }
     }
 
@@ -690,6 +699,7 @@ mod primitive {
 mod array {
     mod is_array {
         use ravro::schema::Schema;
+        use serde::json::{self, Value};
 
         #[test]
         fn is_simple_array() {
@@ -714,6 +724,41 @@ mod array {
         fn primitive_is_not_array() {
             let s = Schema::String("boolean".to_string());
             assert_eq!(s.is_array(), false);
+        }
+
+        #[test]
+        fn object_is_not_array() {
+            let val : Value = json::from_str(r#"{"type":"string"}"#).unwrap(); // about as simple an object as we can get
+            let s = Schema::Object(val);
+
+            assert_eq!(s.is_array(), false);
+        }
+    }
+}
+
+mod object {
+    mod is_object {
+        use ravro::schema::Schema;
+        use serde::json::{self, Value};
+
+        #[test]
+        fn is_object() {
+            let val : Value = json::from_str(r#"{"type":"string"}"#).unwrap(); // about as simple an object as we can get
+            let s = Schema::Object(val);
+
+            assert!(s.is_object());
+        }
+
+         #[test]
+        fn primitive_is_not_object() {
+            let s = Schema::String("boolean".to_string());
+            assert_eq!(s.is_object(), false);
+        }
+
+        #[test]
+        fn array_is_not_object() {
+            let a = Schema::Array(vec![]);
+            assert_eq!(a.is_object(), false);
         }
     }
 }
