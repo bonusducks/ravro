@@ -429,6 +429,12 @@ mod primitive {
 
             assert_eq!(s.is_primitive(), false);
         }
+
+        #[test]
+        fn null_is_not_primitive() {
+            let n = Schema::Null;
+            assert_eq!(n.is_primitive(), false);
+        }
     }
 
     /*
@@ -733,6 +739,12 @@ mod array {
 
             assert_eq!(s.is_array(), false);
         }
+
+        #[test]
+        fn null_is_not_array() {
+            let n = Schema::Null;
+            assert_eq!(n.is_array(), false);
+        }
     }
 }
 
@@ -749,7 +761,7 @@ mod object {
             assert!(s.is_object());
         }
 
-         #[test]
+        #[test]
         fn primitive_is_not_object() {
             let s = Schema::String("boolean".to_string());
             assert_eq!(s.is_object(), false);
@@ -759,6 +771,45 @@ mod object {
         fn array_is_not_object() {
             let a = Schema::Array(vec![]);
             assert_eq!(a.is_object(), false);
+        }
+
+        #[test]
+        fn null_is_not_object() {
+            let n = Schema::Null;
+            assert_eq!(n.is_object(), false);
+        }
+    }
+}
+
+mod null {
+    mod is_null {
+        use ravro::schema::Schema;
+        use serde::json::{self, Value};
+
+        #[test]
+        fn is_null() {
+            let n = Schema::Null;
+            assert!(n.is_null())
+        }
+
+        #[test]
+        fn primitive_is_not_null() {
+            let s = Schema::String("boolean".to_string());
+            assert_eq!(s.is_null(), false);
+        }
+
+        #[test]
+        fn array_is_not_null() {
+            let a = Schema::Array(vec![]);
+            assert_eq!(a.is_null(), false);
+        }
+
+        #[test]
+        fn object_is_not_null() {
+            let val : Value = json::from_str(r#"{"type":"string"}"#).unwrap(); // about as simple an object as we can get
+            let s = Schema::Object(val);
+
+            assert_eq!(s.is_null(), false);
         }
     }
 }
