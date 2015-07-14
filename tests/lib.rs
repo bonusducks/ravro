@@ -513,75 +513,78 @@ mod primitive {
             assert_eq!(None, PrimitiveTypeEnum::from_str(&bogus_raw));        
         }
     }
+    */
 
     mod ser {
-        use ravro::schema::{self};
-        use serde::json::{self};
+        use ravro::schema::{self, Schema};
 
         #[test]
         fn null_type() {
-            let null_type = schema::from_str(&"null").unwrap();
-            let ser_null_type = json::to_string(&null_type).unwrap();
+            // Note that the "null" primitive type isn't the same as Schema::Null
+            let n = Schema::String("null".to_string());
+            let s = schema::to_string(&n).unwrap();
 
-            assert_eq!(ser_null_type, r#"{"type":"null","name":null,"namespace":null,"doc":null,"aliases":[],"fields":[]}"#);
-        }  
+            assert_eq!(s, r#""null""#.to_string());
+        }
 
+        
         #[test]
         fn boolean_type() {
-            let bool_type = schema::from_str(&"boolean").unwrap();
-            let ser_bool_type = json::to_string(&bool_type).unwrap();
+            let b = Schema::String("boolean".to_string());
+            let s = schema::to_string(&b).unwrap();
 
-            assert_eq!(ser_bool_type, r#"{"type":"boolean","name":null,"namespace":null,"doc":null,"aliases":[],"fields":[]}"#);
+            assert_eq!(s, r#""boolean""#.to_string());
         }
 
         #[test]
-        fn int_type() {
-            let int_type = schema::from_str(&"int").unwrap();
-            let ser_int_type = json::to_string(&int_type).unwrap();
+        fn int_type() {            
+            let b = Schema::String("int".to_string());
+            let s = schema::to_string(&b).unwrap();
 
-            assert_eq!(ser_int_type, r#"{"type":"int","name":null,"namespace":null,"doc":null,"aliases":[],"fields":[]}"#);
+            assert_eq!(s, r#""int""#.to_string());
         }
 
         #[test]
         fn long_type() {
-            let long_type = schema::from_str(&"long").unwrap();
-            let ser_long_type = json::to_string(&long_type).unwrap();
+            let b = Schema::String("long".to_string());
+            let s = schema::to_string(&b).unwrap();
 
-            assert_eq!(ser_long_type, r#"{"type":"long","name":null,"namespace":null,"doc":null,"aliases":[],"fields":[]}"#);
+            assert_eq!(s, r#""long""#.to_string());
         }
 
         #[test]
         fn float_type() {
-            let float_type = schema::from_str(&"float").unwrap();
-            let ser_float_type = json::to_string(&float_type).unwrap();
+            let b = Schema::String("float".to_string());
+            let s = schema::to_string(&b).unwrap();
 
-            assert_eq!(ser_float_type, r#"{"type":"float","name":null,"namespace":null,"doc":null,"aliases":[],"fields":[]}"#);
+            assert_eq!(s, r#""float""#.to_string());
         }
 
         #[test]
         fn double_type() {
-            let double_type = schema::from_str(&"double").unwrap();
-            let ser_double_type = json::to_string(&double_type).unwrap();
+            let b = Schema::String("double".to_string());
+            let s = schema::to_string(&b).unwrap();
 
-            assert_eq!(ser_double_type, r#"{"type":"double","name":null,"namespace":null,"doc":null,"aliases":[],"fields":[]}"#);
+            assert_eq!(s, r#""double""#.to_string());
         }
 
         #[test]
         fn bytes_type() {
-            let bytes_type = schema::from_str(&"bytes").unwrap();
-            let ser_bytes_type = json::to_string(&bytes_type).unwrap();
+            let b = Schema::String("bytes".to_string());
+            let s = schema::to_string(&b).unwrap();
 
-            assert_eq!(ser_bytes_type, r#"{"type":"bytes","name":null,"namespace":null,"doc":null,"aliases":[],"fields":[]}"#);
+            assert_eq!(s, r#""bytes""#.to_string());
         }
 
         #[test]
         fn string_type() {
-            let string_type = schema::from_str(&"string").unwrap();
-            let ser_string_type = json::to_string(&string_type).unwrap();
+            let b = Schema::String("string".to_string());
+            let s = schema::to_string(&b).unwrap();
 
-            assert_eq!(ser_string_type, r#"{"type":"string","name":null,"namespace":null,"doc":null,"aliases":[],"fields":[]}"#);
+            assert_eq!(s, r#""string""#.to_string());
         }
     }
+    /*
 
     mod des {
         use ravro::schema::{self, SchemaOld};
@@ -746,6 +749,20 @@ mod array {
             assert_eq!(n.is_array(), false);
         }
     }
+
+    mod ser {
+        use ravro::schema::{self, Schema};
+
+        #[test]
+        fn array_of_primitives() {
+            let s1 = Schema::String("boolean".to_string());
+            let s2 = Schema::String("int".to_string());
+            let arr_schema = Schema::Array(vec!(s1, s2));
+            let s = schema::to_string(&arr_schema).unwrap();
+
+            assert_eq!(s, r#"["boolean","int"]"#.to_string());
+        }
+    }
 }
 
 mod object {
@@ -810,6 +827,19 @@ mod null {
             let s = Schema::Object(val);
 
             assert_eq!(s.is_null(), false);
+        }
+    }
+
+    mod ser {
+        use ravro::schema::{self, Schema};
+
+        #[test]
+        fn null_type() {
+            // Note that the "null" primitive type isn't the same as Schema::Null
+            let n = Schema::Null;
+            let s = schema::to_string(&n).unwrap();
+
+            assert_eq!(s, r#""null""#.to_string());
         }
     }
 }
