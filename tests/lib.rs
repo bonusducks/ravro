@@ -796,6 +796,32 @@ mod object {
             assert_eq!(n.is_object(), false);
         }
     }
+
+    mod as_object {
+        use ravro::schema::Schema;
+        use serde::json::{self, Value};
+
+        #[test]
+        fn object_as_object() {
+            let val : Value = json::from_str(r#"{"type":"string"}"#).unwrap();
+            let o = Schema::Object(val);
+            let o2 = o.as_object().unwrap();
+
+            assert_eq!(o, o2);
+        }
+
+        // Based on this test, I'm not going to go through all 8 primitive types.
+        #[test]
+        fn boolean_as_object() {
+            let val : Value = json::from_str(r#"{"type":"boolean"}"#).unwrap();
+            let o = Schema::Object(val);
+
+            let b = Schema::String("boolean".to_string());
+            let o2 = b.as_object().unwrap();
+
+            assert_eq!(o, o2);
+        }
+    }
 }
 
 mod null {

@@ -2,10 +2,11 @@
 mod schema_model {
     use regex::Regex;
     use serde::json::Value;
+    use serde::json::builder::ObjectBuilder;
 
     pub type PrimitiveType = String;
 
-    #[derive(Clone, PartialEq)]
+    #[derive(Clone, PartialEq, Debug)]
     pub enum Schema {
         Null,
         String(String),
@@ -37,6 +38,21 @@ mod schema_model {
             match *self {
                 Schema::Object(_) => true,
                 _ => false,
+            }
+        }
+
+        /// Returns a new Schema representing the instance as a Schema::Object.
+        /// If it's already a Schema::Object instance, a copy is returned.
+        pub fn as_object(&self) -> Option<Schema> {
+            match *self {
+                Schema::Object(_) => Some(self.clone()),
+                Schema::String(ref s) => {
+                    let value = ObjectBuilder::new()
+                        .insert("type".to_string(), s.clone())
+                        .unwrap();
+                    Some(Schema::Object(value))
+                }
+                _ => None
             }
         }
 
