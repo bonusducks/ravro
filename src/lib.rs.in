@@ -51,6 +51,18 @@ mod schema_model {
                         .insert("type".to_string(), s.clone())
                         .unwrap();
                     Some(Schema::Object(value))
+                },
+                Schema::Array(ref v) => {
+                    let val_array = v.iter()
+                        .map(|e|
+                            if let Some(Schema::Object(v)) = e.as_object() {
+                                v
+                            } else {
+                                Value::String("null".to_string()) // really shouldn't get here...
+                            }
+                        )
+                        .collect();
+                    Some(Schema::Object(Value::Array(val_array)))
                 }
                 _ => None
             }

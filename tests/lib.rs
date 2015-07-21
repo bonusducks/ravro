@@ -821,6 +821,26 @@ mod object {
 
             assert_eq!(o, o2);
         }
+
+        // Not sure if this is strictly corrct...
+        #[test]
+        fn array_as_object() {
+            // While the following line is hte simplest representation of the array, because
+            // the implementation is doing to_object on each element, we are getting the
+            // longer, {"type":"blah"} representation. This may not be a good thing in the
+            // long run.
+            //let val : Value = json::from_str(r#"["boolean","int"]"#).unwrap();
+            let val : Value = json::from_str(r#"[{"type":"boolean"},{"type":"int"}]"#).unwrap();
+            let o = Schema::Object(val);
+
+            let s1 = Schema::String("boolean".to_string());
+            let s2 = Schema::String("int".to_string());
+            let arr_schema = Schema::Array(vec!(s1, s2));
+
+            let o2 = arr_schema.as_object().unwrap();
+
+            assert_eq!(o, o2);
+        }
     }
 }
 
