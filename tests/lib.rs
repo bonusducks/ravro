@@ -899,10 +899,10 @@ mod object {
             // It's in this order because Serde's JSON serialization puts the fields in
             // alphabetical order.
             let pretty = concat!(
-                "{\n",
-                "  \"fields\": [],\n",
-                "  \"name\": \"foo\",\n",
-                "  \"type\": \"record\"\n",
+                "{",
+                "\"fields\":[],",
+                "\"name\":\"foo\",",
+                "\"type\":\"record\"",
                 "}"
             );
 
@@ -928,10 +928,10 @@ mod object {
                 // It's in this order because Serde's JSON serialization puts the fields in
                 // alphabetical order.
                 let pretty = concat!(
-                    "{\n",
-                    "  \"fields\": [],\n",
-                    "  \"name\": \"foo\",\n",
-                    "  \"type\": \"record\"\n",
+                    "{",
+                    "\"fields\":[],",
+                    "\"name\":\"foo\",",
+                    "\"type\":\"record\"",
                     "}"
                 );
 

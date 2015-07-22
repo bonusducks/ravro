@@ -16,7 +16,7 @@ mod schema_model {
     use regex::Regex;
     use serde::json::Value;
     use serde::json::builder::ObjectBuilder;
-    use serde::json::ser::to_string_pretty;
+    use serde::json::ser::to_string;
 
     pub type PrimitiveType = String;
 
@@ -115,7 +115,7 @@ mod schema_model {
     impl<'a> From<&'a Schema> for String {
         fn from(s: &'a Schema) -> String {
             if let Some(Schema::Object(ref v)) = s.as_object() {
-                let r = to_string_pretty(&v);
+                let r = to_string(&v);
                 if r.is_ok() {
                     r.unwrap()
                 } else {
