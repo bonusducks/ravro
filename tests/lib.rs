@@ -378,55 +378,55 @@ mod primitive {
 
         #[test]
         fn is_bool() {
-            let s = Schema::String("boolean".to_string());
+            let s = Schema::String(String::from("boolean"));
             assert!(s.is_primitive());
         }
 
         #[test]
         fn is_null() {
-            let s = Schema::String("null".to_string());
+            let s = Schema::String(String::from("null"));
             assert!(s.is_primitive());
         }
 
         #[test]
         fn is_int() {
-            let s = Schema::String("int".to_string());
+            let s = Schema::String(String::from("int"));
             assert!(s.is_primitive());
         }
 
         #[test]
         fn is_long() {
-            let s = Schema::String("long".to_string());
+            let s = Schema::String(String::from("long"));
             assert!(s.is_primitive());
         }
 
         #[test]
         fn is_float() {
-            let s = Schema::String("float".to_string());
+            let s = Schema::String(String::from("float"));
             assert!(s.is_primitive());
         }
 
         #[test]
         fn is_double() {
-            let s = Schema::String("double".to_string());
+            let s = Schema::String(String::from("double"));
             assert!(s.is_primitive());
         }
 
         #[test]
         fn is_bytes() {
-            let s = Schema::String("bytes".to_string());
+            let s = Schema::String(String::from("bytes"));
             assert!(s.is_primitive());
         }
 
         #[test]
         fn is_string() {
-            let s = Schema::String("string".to_string());
+            let s = Schema::String(String::from("string"));
             assert!(s.is_primitive());
         }
 
         #[test]
         fn is_not_primitive_string() {
-            let s = Schema::String("bogus".to_string());
+            let s = Schema::String(String::from("bogus"));
             assert_eq!(s.is_primitive(), false);
         }
 
@@ -535,7 +535,7 @@ mod primitive {
         #[test]
         fn null_type() {
             // Note that the "null" primitive type isn't the same as Schema::Null
-            let n = Schema::String("null".to_string());
+            let n = Schema::String(String::from("null"));
             let s = schema::to_string(&n).unwrap();
 
             assert_eq!(s, r#""null""#.to_string());
@@ -544,7 +544,7 @@ mod primitive {
         
         #[test]
         fn boolean_type() {
-            let b = Schema::String("boolean".to_string());
+            let b = Schema::String(String::from("boolean"));
             let s = schema::to_string(&b).unwrap();
 
             assert_eq!(s, r#""boolean""#.to_string());
@@ -552,7 +552,7 @@ mod primitive {
 
         #[test]
         fn int_type() {            
-            let b = Schema::String("int".to_string());
+            let b = Schema::String(String::from("int"));
             let s = schema::to_string(&b).unwrap();
 
             assert_eq!(s, r#""int""#.to_string());
@@ -560,7 +560,7 @@ mod primitive {
 
         #[test]
         fn long_type() {
-            let b = Schema::String("long".to_string());
+            let b = Schema::String(String::from("long"));
             let s = schema::to_string(&b).unwrap();
 
             assert_eq!(s, r#""long""#.to_string());
@@ -568,7 +568,7 @@ mod primitive {
 
         #[test]
         fn float_type() {
-            let b = Schema::String("float".to_string());
+            let b = Schema::String(String::from("float"));
             let s = schema::to_string(&b).unwrap();
 
             assert_eq!(s, r#""float""#.to_string());
@@ -576,7 +576,7 @@ mod primitive {
 
         #[test]
         fn double_type() {
-            let b = Schema::String("double".to_string());
+            let b = Schema::String(String::from("double"));
             let s = schema::to_string(&b).unwrap();
 
             assert_eq!(s, r#""double""#.to_string());
@@ -584,7 +584,7 @@ mod primitive {
 
         #[test]
         fn bytes_type() {
-            let b = Schema::String("bytes".to_string());
+            let b = Schema::String(String::from("bytes"));
             let s = schema::to_string(&b).unwrap();
 
             assert_eq!(s, r#""bytes""#.to_string());
@@ -592,7 +592,7 @@ mod primitive {
 
         #[test]
         fn string_type() {
-            let b = Schema::String("string".to_string());
+            let b = Schema::String(String::from("string"));
             let s = schema::to_string(&b).unwrap();
 
             assert_eq!(s, r#""string""#.to_string());
@@ -726,8 +726,8 @@ mod array {
 
         #[test]
         fn is_simple_array() {
-            let s1 = Schema::String("boolean".to_string());
-            let s2 = Schema::String("int".to_string());
+            let s1 = Schema::String(String::from("boolean"));
+            let s2 = Schema::String(String::from("int"));
 
             let arr_schema = Schema::Array(vec!(s1, s2));
 
@@ -745,7 +745,7 @@ mod array {
 
         #[test]
         fn primitive_is_not_array() {
-            let s = Schema::String("boolean".to_string());
+            let s = Schema::String(String::from("boolean"));
             assert_eq!(s.is_array(), false);
         }
 
@@ -769,8 +769,8 @@ mod array {
 
         #[test]
         fn array_of_primitives() {
-            let s1 = Schema::String("boolean".to_string());
-            let s2 = Schema::String("int".to_string());
+            let s1 = Schema::String(String::from("boolean"));
+            let s2 = Schema::String(String::from("int"));
             let arr_schema = Schema::Array(vec!(s1, s2));
             let s = schema::to_string(&arr_schema).unwrap();
 
@@ -794,7 +794,7 @@ mod object {
 
         #[test]
         fn primitive_is_not_object() {
-            let s = Schema::String("boolean".to_string());
+            let s = Schema::String(String::from("boolean"));
             assert_eq!(s.is_object(), false);
         }
 
@@ -830,7 +830,7 @@ mod object {
             let val : Value = json::from_str(r#"{"type":"boolean"}"#).unwrap();
             let o = Schema::Object(val);
 
-            let b = Schema::String("boolean".to_string());
+            let b = Schema::String(String::from("boolean"));
             let o2 = b.as_object().unwrap();
 
             assert_eq!(o, o2);
@@ -847,8 +847,8 @@ mod object {
             let val : Value = json::from_str(r#"[{"type":"boolean"},{"type":"int"}]"#).unwrap();
             let o = Schema::Object(val);
 
-            let s1 = Schema::String("boolean".to_string());
-            let s2 = Schema::String("int".to_string());
+            let s1 = Schema::String(String::from("boolean"));
+            let s2 = Schema::String(String::from("int"));
             let arr_schema = Schema::Array(vec!(s1, s2));
 
             let o2 = arr_schema.as_object().unwrap();
@@ -882,7 +882,7 @@ mod null {
 
         #[test]
         fn primitive_is_not_null() {
-            let s = Schema::String("boolean".to_string());
+            let s = Schema::String(String::from("boolean"));
             assert_eq!(s.is_null(), false);
         }
 
