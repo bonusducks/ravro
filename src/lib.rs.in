@@ -110,6 +110,24 @@ mod schema_model {
         pub fn to_string(&self) -> String {
             String::from(self)
         }
+
+        pub fn fullname(&self) -> String {
+            match *self {
+                Schema::Object(ref value) => {
+                    self.object_fullname(value)
+                }
+                _ => String::from("")
+            }
+        }
+
+        fn object_fullname(&self, value: &Value) -> String {
+            // Start simple, and build up the rules as the test cases require.
+            if let Some(&Value::String(ref name_value)) = value.find("name") {
+                name_value.clone()
+            } else {
+                String::from("")
+            }
+        }
     }
 
     impl<'a> From<&'a Schema> for String {

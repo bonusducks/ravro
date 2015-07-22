@@ -909,6 +909,24 @@ mod object {
             assert_eq!(s, pretty);
         }
 
+        mod fullname {
+            use ravro::schema::Schema;
+            use serde::json::{self, Value};
+            use serde::json::builder::ObjectBuilder;
+
+            #[test]
+            fn simple_name() {
+                let val = ObjectBuilder::new()
+                    .insert(String::from("type"), String::from("record"))
+                    .insert(String::from("name"), String::from("foo"))
+                    .insert_array(String::from("fields"), |bld| bld)   // empty field array
+                    .unwrap();
+                let o = Schema::Object(val);
+
+                assert_eq!(o.fullname(), String::from("foo"));
+            }
+        }
+
         mod ser {
             use std::string::String;
             use ravro::schema::Schema;
