@@ -867,6 +867,55 @@ mod object {
             assert_eq!(o, o2);
         }
     }
+
+    // The Schema::Object type can be specialized as a record.
+    mod record {
+        use ravro::schema::Schema;
+        use serde::json::{self, Value};
+        use serde::json::builder::ObjectBuilder;
+
+        #[test]
+        fn is_record() {
+            let val = ObjectBuilder::new()
+                .insert(String::from("type"), String::from("record"))
+                .insert(String::from("name"), String::from("foo"))
+                .insert_array(String::from("fields"), |bld| bld)   // empty field array
+                .unwrap();
+            let o = Schema::Object(val);
+
+            assert!(o.is_record());
+        }
+
+        mod ser {
+            use std::string::String;
+            use ravro::schema::Schema;
+            use serde::json::{self, Value};
+            use serde::json::builder::ObjectBuilder;
+
+            #[test]
+            fn rec_1() {
+                let val = ObjectBuilder::new()
+                    .insert(String::from("type"), String::from("record"))
+                    .insert(String::from("name"), String::from("foo"))
+                    .insert_array(String::from("fields"), |bld| bld)   // empty field array
+                    .unwrap();
+                let o = Schema::Object(val);
+
+                let s = String::from(&o);
+                // It's in this order because Serde's JSON serialization puts the fields in
+                // alphabetical order.
+                let pretty = concat!(
+                    "{\n",
+                    "  \"fields\": [],\n",
+                    "  \"name\": \"foo\",\n",
+                    "  \"type\": \"record\"\n",
+                    "}"
+                );
+
+                assert_eq!(s, pretty);
+            }
+        }
+    }
 }
 
 mod null {

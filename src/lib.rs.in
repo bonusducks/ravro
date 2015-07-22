@@ -16,6 +16,7 @@ mod schema_model {
     use regex::Regex;
     use serde::json::Value;
     use serde::json::builder::ObjectBuilder;
+    use serde::json::ser::to_string_pretty;
 
     pub type PrimitiveType = String;
 
@@ -90,6 +91,34 @@ mod schema_model {
             match *self {
                 Schema::Null => true,
                 _ => false,
+            }
+        }
+
+        pub fn is_record(&self) -> bool {
+            match *self {
+                Schema::Object(ref value) => {
+                    if let Some(&Value::String(ref t)) = value.find("type") {
+                        t == "record"
+                    } else {
+                        false
+                    }
+                },
+                _ => false
+            }
+        }
+    }
+
+    impl<'a> From<&'a Schema> for String {
+        fn from(s: &'a Schema) -> String {
+            if let Some(Schema::Object(ref v)) = s.as_object() {
+                let r = to_string_pretty(&v);
+                if r.is_ok() {
+                    r.unwrap()
+                } else {
+                    String::from("")
+                }
+            } else {
+                String::from("")
             }
         }
     }
