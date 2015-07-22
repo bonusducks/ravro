@@ -886,6 +886,29 @@ mod object {
             assert!(o.is_record());
         }
 
+        #[test]
+        fn to_string() {
+            let val = ObjectBuilder::new()
+                .insert(String::from("type"), String::from("record"))
+                .insert(String::from("name"), String::from("foo"))
+                .insert_array(String::from("fields"), |bld| bld)   // empty field array
+                .unwrap();
+            let o = Schema::Object(val);
+
+            let s = o.to_string();
+            // It's in this order because Serde's JSON serialization puts the fields in
+            // alphabetical order.
+            let pretty = concat!(
+                "{\n",
+                "  \"fields\": [],\n",
+                "  \"name\": \"foo\",\n",
+                "  \"type\": \"record\"\n",
+                "}"
+            );
+
+            assert_eq!(s, pretty);
+        }
+
         mod ser {
             use std::string::String;
             use ravro::schema::Schema;

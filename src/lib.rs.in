@@ -106,6 +106,10 @@ mod schema_model {
                 _ => false
             }
         }
+
+        pub fn to_string(&self) -> String {
+            String::from(self)
+        }
     }
 
     impl<'a> From<&'a Schema> for String {
