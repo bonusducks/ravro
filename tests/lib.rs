@@ -538,7 +538,7 @@ mod primitive {
             let n = Schema::String(String::from("null"));
             let s = schema::to_string(&n).unwrap();
 
-            assert_eq!(s, r#""null""#.to_string());
+            assert_eq!(s, String::from(r#""null""#));
         }
 
         
@@ -547,7 +547,7 @@ mod primitive {
             let b = Schema::String(String::from("boolean"));
             let s = schema::to_string(&b).unwrap();
 
-            assert_eq!(s, r#""boolean""#.to_string());
+            assert_eq!(s, String::from(r#""boolean""#));
         }
 
         #[test]
@@ -555,7 +555,7 @@ mod primitive {
             let b = Schema::String(String::from("int"));
             let s = schema::to_string(&b).unwrap();
 
-            assert_eq!(s, r#""int""#.to_string());
+            assert_eq!(s, String::from(r#""int""#));
         }
 
         #[test]
@@ -563,7 +563,7 @@ mod primitive {
             let b = Schema::String(String::from("long"));
             let s = schema::to_string(&b).unwrap();
 
-            assert_eq!(s, r#""long""#.to_string());
+            assert_eq!(s, String::from(r#""long""#));
         }
 
         #[test]
@@ -571,7 +571,7 @@ mod primitive {
             let b = Schema::String(String::from("float"));
             let s = schema::to_string(&b).unwrap();
 
-            assert_eq!(s, r#""float""#.to_string());
+            assert_eq!(s, String::from(r#""float""#));
         }
 
         #[test]
@@ -579,7 +579,7 @@ mod primitive {
             let b = Schema::String(String::from("double"));
             let s = schema::to_string(&b).unwrap();
 
-            assert_eq!(s, r#""double""#.to_string());
+            assert_eq!(s, String::from(r#""double""#));
         }
 
         #[test]
@@ -587,7 +587,7 @@ mod primitive {
             let b = Schema::String(String::from("bytes"));
             let s = schema::to_string(&b).unwrap();
 
-            assert_eq!(s, r#""bytes""#.to_string());
+            assert_eq!(s, String::from(r#""bytes""#));
         }
 
         #[test]
@@ -595,7 +595,7 @@ mod primitive {
             let b = Schema::String(String::from("string"));
             let s = schema::to_string(&b).unwrap();
 
-            assert_eq!(s, r#""string""#.to_string());
+            assert_eq!(s, String::from(r#""string""#));
         }
     }
     /*
@@ -774,7 +774,7 @@ mod array {
             let arr_schema = Schema::Array(vec!(s1, s2));
             let s = schema::to_string(&arr_schema).unwrap();
 
-            assert_eq!(s, r#"["boolean","int"]"#.to_string());
+            assert_eq!(s, String::from(r#"["boolean","int"]"#));
         }
     }
 }
@@ -910,7 +910,7 @@ mod null {
             let n = Schema::Null;
             let s = schema::to_string(&n).unwrap();
 
-            assert_eq!(s, r#""null""#.to_string());
+            assert_eq!(s, String::from(r#""null""#));
         }
     }
 }
