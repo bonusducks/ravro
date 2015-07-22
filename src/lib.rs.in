@@ -61,7 +61,7 @@ mod schema_model {
                 Schema::Object(_) => Some(self.clone()),
                 Schema::String(ref s) => {
                     let value = ObjectBuilder::new()
-                        .insert("type".to_string(), s.clone())
+                        .insert(String::from("type"), s.clone())
                         .unwrap();
                     Some(Schema::Object(value))
                 },
@@ -71,13 +71,18 @@ mod schema_model {
                             if let Some(Schema::Object(v)) = e.as_object() {
                                 v
                             } else {
-                                Value::String("null".to_string()) // really shouldn't get here...
+                                Value::String(String::from("null")) // really shouldn't get here...
                             }
                         )
                         .collect();
                     Some(Schema::Object(Value::Array(val_array)))
+                },
+                Schema::Null => {
+                    let value = ObjectBuilder::new()
+                        .insert(String::from("type"), String::from("null"))
+                        .unwrap();
+                    Some(Schema::Object(value))
                 }
-                _ => None
             }
         }
 

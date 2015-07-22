@@ -855,6 +855,17 @@ mod object {
 
             assert_eq!(o, o2);
         }
+
+        #[test]
+        fn null_as_object() {
+            let val : Value = json::from_str(r#"{"type":"null"}"#).unwrap();
+            let o = Schema::Object(val);
+
+            let n = Schema::Null;
+            let o2 = n.as_object().unwrap();
+
+            assert_eq!(o, o2);
+        }
     }
 }
 
