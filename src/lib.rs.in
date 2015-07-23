@@ -107,12 +107,13 @@ mod schema_model {
             }
         }
 
-        pub fn fullname(&self) -> String {
+        pub fn fullname(&self) -> Result<String, &'static str> {
             match *self {
-                Schema::Object(ref value) => {
-                    self.object_fullname(value)
+                Schema::Object(_) => {
+                    let fname = try!(self.valid_fullname());
+                    Ok(fname)
                 }
-                _ => String::from("")
+                _ => Err("This schmea type doesn't support a fullname")
             }
         }
 
@@ -132,18 +133,24 @@ mod schema_model {
             }
         }
 
-        pub fn valid_fullname(&self) -> bool {
+        fn valid_fullname(&self) -> Result<String, &'static str> {
             match *self {
-                Schema::Object(_) => {
-                    let fname = self.fullname();
+                Schema::Object(ref value) => {
+                    let fname = self.object_fullname(value);
                     let segment_re = Regex::new(r#"^[A-Za-z_][A-Za-z0-9_]*$"#).unwrap();
 
                     // yeah, I could have done this as for loop.
-                    fname.split('.').fold(true, |valid, segment|
+                    let valid_fname = fname.split('.').fold(true, |valid, segment|
                         valid && segment_re.is_match(&segment)
-                    )
+                    );
+
+                    if valid_fname {
+                        Ok(fname)
+                    } else {
+                        Err("Name is not well formed")
+                    }
                 },
-                _ => false       // For all other types, punt
+                _ => Err("Not a valid Schema type")
             }
         }
     }

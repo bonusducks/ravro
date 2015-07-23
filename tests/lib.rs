@@ -923,8 +923,7 @@ mod object {
                     .unwrap();
                 let o = Schema::Object(val);
 
-                assert_eq!(o.fullname(), String::from("foo"));
-                assert!(o.valid_fullname());
+                assert_eq!(o.fullname().unwrap(), String::from("foo"));
             }
 
             #[test]
@@ -937,8 +936,7 @@ mod object {
                     .unwrap();
                 let o = Schema::Object(val);
 
-                assert_eq!(o.fullname(), String::from("x.y.foo"));
-                assert!(o.valid_fullname());
+                assert_eq!(o.fullname().unwrap(), String::from("x.y.foo"));
             }
 
             #[test]
@@ -951,8 +949,19 @@ mod object {
                     .unwrap();
                 let o = Schema::Object(val);
 
-                assert_eq!(o.fullname(), String::from("a.b.foo"));
-                assert!(o.valid_fullname());
+                assert_eq!(o.fullname().unwrap(), String::from("a.b.foo"));
+            }
+
+            #[test]
+            fn name_cannot_be_empty() {
+                let val = ObjectBuilder::new()
+                    .insert(String::from("type"), String::from("record"))
+                    .insert(String::from("name"), String::from(""))
+                    .insert_array(String::from("fields"), |bld| bld)   // empty field array
+                    .unwrap();
+                let o = Schema::Object(val);
+
+                assert_eq!(o.fullname().is_err(), true);
             }
 
             #[test]
@@ -964,10 +973,7 @@ mod object {
                     .unwrap();
                 let o = Schema::Object(val);
 
-                // Note that fullname() makes no effort to fix the name
-                assert_eq!(o.fullname(), String::from("foo."));
-
-                assert_eq!(o.valid_fullname(), false);
+                assert_eq!(o.fullname().is_err(), true);
             }
 
             #[test]
@@ -979,10 +985,7 @@ mod object {
                     .unwrap();
                 let o = Schema::Object(val);
 
-                // Note that fullname() makes no effort to fix the name
-                assert_eq!(o.fullname(), String::from(".foo"));
-
-                assert_eq!(o.valid_fullname(), false);
+                assert_eq!(o.fullname().is_err(), true);
             }
 
             #[test]
@@ -994,10 +997,7 @@ mod object {
                     .unwrap();
                 let o = Schema::Object(val);
 
-                // Note that fullname() makes no effort to fix the name
-                assert_eq!(o.fullname(), String::from("9foo"));
-
-                assert_eq!(o.valid_fullname(), false);
+                assert_eq!(o.fullname().is_err(), true);
             }
 
             #[test]
@@ -1010,8 +1010,7 @@ mod object {
                     .unwrap();
                 let o = Schema::Object(val);
 
-                assert_eq!(o.fullname(), String::from("Yadda_.FooBar12_34.blah_blah_blah.foo"));
-                assert!(o.valid_fullname());
+                assert_eq!(o.fullname().unwrap(), String::from("Yadda_.FooBar12_34.blah_blah_blah.foo"));
             }
 
             #[test]
@@ -1024,8 +1023,7 @@ mod object {
                     .unwrap();
                 let o = Schema::Object(val);
 
-                assert_eq!(o.fullname(), String::from("x.y..foo"));
-                assert_eq!(o.valid_fullname(), false);
+                assert_eq!(o.fullname().is_err(), true);
             }
 
             // These name tests aren't exhaustive; they can't be really unless I come up with
