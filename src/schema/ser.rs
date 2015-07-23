@@ -12,11 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use schema_model::*;
-//use serde::json::{self};
-//use super::error::{Error, ErrorCode};
+use super::model::Schema;
 use std::string::FromUtf8Error;
-
 
 pub fn to_string(schema: &Schema) -> Result<String, FromUtf8Error> {
 	// Do this the brute force way for now, let's get pretty later.

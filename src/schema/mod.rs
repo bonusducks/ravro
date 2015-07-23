@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Re-export the SchemaOld model in a more friendly namesapce.
-pub use schema_model::*;
-
+// Re-export the Schema model in a more friendly namesapce.
+pub use self::model::*;
 pub use self::ser::{to_string};
 
 pub mod ser;
 pub mod error;
+mod model;
