@@ -107,10 +107,6 @@ mod schema_model {
             }
         }
 
-        pub fn to_string(&self) -> String {
-            String::from(self)
-        }
-
         pub fn fullname(&self) -> String {
             match *self {
                 Schema::Object(ref value) => {
@@ -121,12 +117,40 @@ mod schema_model {
         }
 
         fn object_fullname(&self, value: &Value) -> String {
-            // Start simple, and build up the rules as the test cases require.
             if let Some(&Value::String(ref name_value)) = value.find("name") {
-                name_value.clone()
+                if let Some(&Value::String(ref ns_value)) = value.find("namespace") {
+                    if name_value.contains(".") {
+                        name_value.clone()
+                    } else {
+                        format!("{}.{}", ns_value, name_value)
+                    }
+                } else {
+                    name_value.clone()
+                }
             } else {
                 String::from("")
             }
+        }
+
+        pub fn valid_fullname(&self) -> bool {
+            match *self {
+                Schema::Object(_) => {
+                    let fname = self.fullname();
+                    let segment_re = Regex::new(r#"^[A-Za-z_][A-Za-z0-9_]*$"#).unwrap();
+
+                    // yeah, I could have done this as for loop.
+                    fname.split('.').fold(true, |valid, segment|
+                        valid && segment_re.is_match(&segment)
+                    )
+                },
+                _ => false       // For all other types, punt
+            }
+        }
+    }
+
+    impl ToString for Schema {
+        fn to_string(&self) -> String {
+            String::from(self)
         }
     }
 

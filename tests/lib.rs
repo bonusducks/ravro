@@ -924,7 +924,114 @@ mod object {
                 let o = Schema::Object(val);
 
                 assert_eq!(o.fullname(), String::from("foo"));
+                assert!(o.valid_fullname());
             }
+
+            #[test]
+            fn name_with_namespace() {
+                let val = ObjectBuilder::new()
+                    .insert(String::from("type"), String::from("record"))
+                    .insert(String::from("name"), String::from("foo"))
+                    .insert(String::from("namespace"), String::from("x.y"))
+                    .insert_array(String::from("fields"), |bld| bld)   // empty field array
+                    .unwrap();
+                let o = Schema::Object(val);
+
+                assert_eq!(o.fullname(), String::from("x.y.foo"));
+                assert!(o.valid_fullname());
+            }
+
+            #[test]
+            fn name_with_dots() {
+                let val = ObjectBuilder::new()
+                    .insert(String::from("type"), String::from("record"))
+                    .insert(String::from("name"), String::from("a.b.foo"))
+                    .insert(String::from("namespace"), String::from("x.y"))
+                    .insert_array(String::from("fields"), |bld| bld)   // empty field array
+                    .unwrap();
+                let o = Schema::Object(val);
+
+                assert_eq!(o.fullname(), String::from("a.b.foo"));
+                assert!(o.valid_fullname());
+            }
+
+            #[test]
+            fn name_cannot_end_with_period() {
+                let val = ObjectBuilder::new()
+                    .insert(String::from("type"), String::from("record"))
+                    .insert(String::from("name"), String::from("foo."))
+                    .insert_array(String::from("fields"), |bld| bld)   // empty field array
+                    .unwrap();
+                let o = Schema::Object(val);
+
+                // Note that fullname() makes no effort to fix the name
+                assert_eq!(o.fullname(), String::from("foo."));
+
+                assert_eq!(o.valid_fullname(), false);
+            }
+
+            #[test]
+            fn name_cannot_start_with_period() {
+                let val = ObjectBuilder::new()
+                    .insert(String::from("type"), String::from("record"))
+                    .insert(String::from("name"), String::from(".foo"))
+                    .insert_array(String::from("fields"), |bld| bld)   // empty field array
+                    .unwrap();
+                let o = Schema::Object(val);
+
+                // Note that fullname() makes no effort to fix the name
+                assert_eq!(o.fullname(), String::from(".foo"));
+
+                assert_eq!(o.valid_fullname(), false);
+            }
+
+            #[test]
+            fn name_cannot_start_with_number() {
+                let val = ObjectBuilder::new()
+                    .insert(String::from("type"), String::from("record"))
+                    .insert(String::from("name"), String::from("9foo"))
+                    .insert_array(String::from("fields"), |bld| bld)   // empty field array
+                    .unwrap();
+                let o = Schema::Object(val);
+
+                // Note that fullname() makes no effort to fix the name
+                assert_eq!(o.fullname(), String::from("9foo"));
+
+                assert_eq!(o.valid_fullname(), false);
+            }
+
+            #[test]
+            fn namespace_with_more_complicated_segments() {
+                let val = ObjectBuilder::new()
+                    .insert(String::from("type"), String::from("record"))
+                    .insert(String::from("name"), String::from("foo"))
+                    .insert(String::from("namespace"), String::from("Yadda_.FooBar12_34.blah_blah_blah"))
+                    .insert_array(String::from("fields"), |bld| bld)   // empty field array
+                    .unwrap();
+                let o = Schema::Object(val);
+
+                assert_eq!(o.fullname(), String::from("Yadda_.FooBar12_34.blah_blah_blah.foo"));
+                assert!(o.valid_fullname());
+            }
+
+            #[test]
+            fn namespace_cannot_have_trailing_period() {
+                let val = ObjectBuilder::new()
+                    .insert(String::from("type"), String::from("record"))
+                    .insert(String::from("name"), String::from("foo"))
+                    .insert(String::from("namespace"), String::from("x.y."))
+                    .insert_array(String::from("fields"), |bld| bld)   // empty field array
+                    .unwrap();
+                let o = Schema::Object(val);
+
+                assert_eq!(o.fullname(), String::from("x.y..foo"));
+                assert_eq!(o.valid_fullname(), false);
+            }
+
+            // These name tests aren't exhaustive; they can't be really unless I come up with
+            // a state machine to drive all possible permutations of the regex provided in the
+            // specification. So while this isn't perfect, and I'm not happy, I'm hoping I've
+            // covered the most significant cases.
         }
 
         mod ser {
