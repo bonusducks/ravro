@@ -15,7 +15,11 @@
 // Re-export the Schema model in a more friendly namesapce.
 pub use self::model::*;
 pub use self::ser::{to_string};
+pub use self::builder::{
+	RecordBuilder
+};
 
 pub mod ser;
 pub mod error;
+mod builder;
 mod model;

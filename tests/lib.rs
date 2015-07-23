@@ -479,7 +479,6 @@ mod object {
         }
 
         mod ser {
-            use std::string::String;
             use ravro::schema::Schema;
             use serde::json::builder::ObjectBuilder;
 
@@ -504,6 +503,29 @@ mod object {
                 );
 
                 assert_eq!(s, pretty);
+            }
+        }
+
+        mod builder {
+            use ravro::schema::RecordBuilder;
+
+            #[test]
+            fn is_record() {
+                let r = RecordBuilder::new()
+                    .unwrap();
+
+                assert!(r.is_record());
+                assert!(r.fullname().is_err()); // didn't assign a name to the record.
+            }
+
+            #[test]
+            fn has_name() {
+                let r = RecordBuilder::new()
+                    .name(String::from("foo"))
+                    .unwrap();
+
+                assert!(r.is_record());
+                assert_eq!(r.fullname().unwrap(), "foo");
             }
         }
     }
