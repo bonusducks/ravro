@@ -356,6 +356,19 @@ mod object {
             assert_eq!(s, pretty);
         }
 
+        #[test]
+        fn has_doc() {
+            let val = ObjectBuilder::new()
+                .insert(String::from("type"), String::from("record"))
+                .insert(String::from("name"), String::from("foo"))
+                .insert(String::from("doc"), String::from("yadda yadda"))
+                .insert_array(String::from("fields"), |bld| bld)   // empty field array
+                .unwrap();
+            let o = Schema::Object(val);
+
+            assert_eq!(o.doc().unwrap(), "yadda yadda");
+        }
+
         mod fullname {
             use ravro::schema::Schema;
             use serde::json::builder::ObjectBuilder;
@@ -526,6 +539,37 @@ mod object {
 
                 assert!(r.is_record());
                 assert_eq!(r.fullname().unwrap(), "foo");
+            }
+
+            #[test]
+            fn has_namespace() {
+                let r = RecordBuilder::new()
+                    .name(String::from("foo"))
+                    .namespace(String::from("x.y"))
+                    .unwrap();
+
+                assert_eq!(r.fullname().unwrap(), "x.y.foo");
+            }
+
+            #[test]
+            fn has_doc() {
+                let r = RecordBuilder::new()
+                    .name(String::from("foo"))
+                    .doc(String::from("yadda yadda"))
+                    .unwrap();
+
+                assert_eq!(r.doc().unwrap(), "yadda yadda");
+            }
+
+            #[test]
+            fn has_aliases() {
+                let aliases_vec = vec![String::from("bar"), String::from("baz")];
+                let r = RecordBuilder::new()
+                    .name(String::from("foo"))
+                    .aliases(aliases_vec)
+                    .unwrap();
+
+                assert_eq!(r.aliases().unwrap(), vec![String::from("bar"), String::from("baz")]);
             }
         }
     }

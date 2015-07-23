@@ -150,6 +150,39 @@ impl Schema {
             _ => Err("Not a valid Schema type")
         }
     }
+
+    pub fn doc(&self) -> Option<&String> {
+        match *self {
+            Schema::Object(ref value) => {
+                if let Some(&Value::String(ref doc)) = value.find("doc") {
+                    Some(doc)
+                } else {
+                    None
+                }
+            },
+            _ => None
+        }
+    }
+
+    pub fn aliases(&self) -> Option<Vec<String>> {
+        match *self {
+            Schema::Object(ref value) => {
+                if let Some(&Value::Array(ref value_vec)) = value.find("aliases") {
+                    let mut alias_vec = Vec::new();
+                    for value in value_vec {
+                        match *value {
+                            Value::String(ref s) => { alias_vec.push(s.clone()); }
+                            _ => (),
+                        }
+                    }
+                    Some(alias_vec)
+                } else {
+                    None
+                }
+            },
+            _ => None
+        }
+    }
 }
 
 impl ToString for Schema {

@@ -43,4 +43,18 @@ impl RecordBuilder {
 		self.record.insert(String::from("namespace"), Value::String(ns));
 		self
 	}
+
+	pub fn doc(mut self, doc: String) -> RecordBuilder {
+		self.record.insert(String::from("doc"), Value::String(doc));
+		self
+	}
+
+	pub fn aliases(mut self, aliases: Vec<String>) -> RecordBuilder {
+		let mut array : Vec<Value> = Vec::new();
+		for alias in aliases {
+			array.push(Value::String(alias));
+		}
+		self.record.insert(String::from("aliases"), Value::Array(array));
+		self
+	}
 }
