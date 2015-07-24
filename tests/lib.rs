@@ -521,6 +521,7 @@ mod object {
 
         mod builder {
             use ravro::schema::{FieldSortOrder, RecordBuilder, Schema};
+            use serde::json::Value;
 
             #[test]
             fn is_record() {
@@ -681,6 +682,33 @@ mod object {
                 let pretty = concat!(
                     "{",
                     "\"fields\":[{\"aliases\":[\"bar\",\"baz\"],\"name\":\"bar\",\"type\":{\"type\":\"string\"}}],",
+                    "\"name\":\"foo\",",
+                    "\"type\":\"record\"",
+                    "}"
+                );
+
+                assert_eq!(s, pretty);
+            }
+
+            #[test]
+            fn has_field_with_default() {
+                let r = RecordBuilder::new()
+                    .name(String::from("foo"))
+                    .fields(|fab|
+                        fab.push(|fb|
+                            fb.name(String::from("bar"))
+                              .field_type(Schema::String(String::from("string")))
+                              .default(Value::String(String::from("one two three")))
+                        )
+                    )
+                    .unwrap();
+
+                let s = String::from(&r);
+                // It's in this order because Serde's JSON serialization puts the fields in
+                // alphabetical order, which is not the Avro cannonical order.
+                let pretty = concat!(
+                    "{",
+                    "\"fields\":[{\"default\":\"one two three\",\"name\":\"bar\",\"type\":{\"type\":\"string\"}}],",
                     "\"name\":\"foo\",",
                     "\"type\":\"record\"",
                     "}"

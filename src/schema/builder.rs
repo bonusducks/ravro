@@ -62,6 +62,11 @@ impl FieldBuilder {
 		self.field.insert(String::from("order"), Value::String(String::from(&order)));
 		self
 	}
+
+	pub fn default(mut self, default: Value) -> FieldBuilder {
+		self.field.insert(String::from("default"), default);
+		self
+	}
 }
 
 pub struct FieldArrayBuilder {
