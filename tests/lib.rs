@@ -520,7 +520,7 @@ mod object {
         }
 
         mod builder {
-            use ravro::schema::{RecordBuilder, Schema};
+            use ravro::schema::{FieldSortOrder, RecordBuilder, Schema};
 
             #[test]
             fn is_record() {
@@ -590,6 +590,97 @@ mod object {
                 let pretty = concat!(
                     "{",
                     "\"fields\":[{\"name\":\"bar\",\"type\":{\"type\":\"boolean\"}}],",
+                    "\"name\":\"foo\",",
+                    "\"type\":\"record\"",
+                    "}"
+                );
+
+                assert_eq!(s, pretty);
+            }
+
+            #[test]
+            fn has_multiple_fields() {
+                let r = RecordBuilder::new()
+                    .name(String::from("foo"))
+                    .fields(|bld|
+                        bld
+                        .push(|fb|
+                            fb.name(String::from("bar"))
+                              .field_type(Schema::String(String::from("boolean")))
+                        )
+                        .push(|fb|
+                            fb.name(String::from("baz"))
+                              .field_type(Schema::String(String::from("int")))
+                              .doc(String::from("yadda yadda"))
+                        )
+                    )
+                    .unwrap();
+
+                let s = String::from(&r);
+                // It's in this order because Serde's JSON serialization puts the fields in
+                // alphabetical order, which is not the Avro cannonical order.
+                let pretty = concat!(
+                    "{",
+                    "\"fields\":[",
+                    "{\"name\":\"bar\",\"type\":{\"type\":\"boolean\"}},",
+                    "{\"doc\":\"yadda yadda\",\"name\":\"baz\",\"type\":{\"type\":\"int\"}}",
+                    "],",
+                    "\"name\":\"foo\",",
+                    "\"type\":\"record\"",
+                    "}"
+                );
+
+                assert_eq!(s, pretty);
+            }
+
+            #[test]
+            fn has_field_with_order() {
+                let r = RecordBuilder::new()
+                    .name(String::from("foo"))
+                    .fields(|fab|
+                        fab.push(|fb|
+                            fb.name(String::from("bar"))
+                              .field_type(Schema::String(String::from("string")))
+                              .order(FieldSortOrder::Ascending)
+                        )
+                    )
+                    .unwrap();
+
+                let s = String::from(&r);
+                // It's in this order because Serde's JSON serialization puts the fields in
+                // alphabetical order, which is not the Avro cannonical order.
+                let pretty = concat!(
+                    "{",
+                    "\"fields\":[{\"name\":\"bar\",\"order\":\"ascending\",\"type\":{\"type\":\"string\"}}],",
+                    "\"name\":\"foo\",",
+                    "\"type\":\"record\"",
+                    "}"
+                );
+
+                assert_eq!(s, pretty);
+            }
+
+            #[test]
+            fn has_field_with_aliases() {
+                let aliases_vec = vec![String::from("bar"), String::from("baz")];
+
+                let r = RecordBuilder::new()
+                    .name(String::from("foo"))
+                    .fields(|fab|
+                        fab.push(|fb|
+                            fb.name(String::from("bar"))
+                              .field_type(Schema::String(String::from("string")))
+                              .aliases(aliases_vec)
+                        )
+                    )
+                    .unwrap();
+
+                let s = String::from(&r);
+                // It's in this order because Serde's JSON serialization puts the fields in
+                // alphabetical order, which is not the Avro cannonical order.
+                let pretty = concat!(
+                    "{",
+                    "\"fields\":[{\"aliases\":[\"bar\",\"baz\"],\"name\":\"bar\",\"type\":{\"type\":\"string\"}}],",
                     "\"name\":\"foo\",",
                     "\"type\":\"record\"",
                     "}"

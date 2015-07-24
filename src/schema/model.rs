@@ -25,6 +25,22 @@ pub enum Schema {
     Object(Value)
 }
 
+pub enum FieldSortOrder {
+    Ascending,
+    Descending,
+    Ignore,
+}
+
+impl<'a> From<&'a FieldSortOrder> for String {
+    fn from(s: &'a FieldSortOrder) -> String {
+        match *s {
+            FieldSortOrder::Ascending  => String::from("ascending"),
+            FieldSortOrder::Descending => String::from("descending"),
+            FieldSortOrder::Ignore     => String::from("ignore"),
+        }
+    }
+}
+
 impl Schema {
     pub fn is_primitive(&self) -> bool {
         match *self {

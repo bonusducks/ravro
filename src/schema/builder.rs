@@ -57,6 +57,11 @@ impl FieldBuilder {
 		self.field.insert(String::from("aliases"), Value::Array(array));
 		self
 	}
+
+	pub fn order(mut self, order: FieldSortOrder) -> FieldBuilder {
+		self.field.insert(String::from("order"), Value::String(String::from(&order)));
+		self
+	}
 }
 
 pub struct FieldArrayBuilder {
