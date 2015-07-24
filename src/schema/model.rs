@@ -183,6 +183,20 @@ impl Schema {
             _ => None
         }
     }
+
+    // Get the raw fields in a record
+    pub fn fields(&self) -> Option<&Vec<Value>> {
+        match *self {
+            Schema::Object(ref value) => {
+                if let Some(&Value::Array(ref array)) = value.find("fields") {
+                    Some(&*array)
+                } else {
+                    None
+                }
+            }
+            _ => None
+        }
+    }
 }
 
 impl ToString for Schema {

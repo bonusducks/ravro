@@ -520,7 +520,7 @@ mod object {
         }
 
         mod builder {
-            use ravro::schema::RecordBuilder;
+            use ravro::schema::{RecordBuilder, Schema};
 
             #[test]
             fn is_record() {
@@ -570,6 +570,32 @@ mod object {
                     .unwrap();
 
                 assert_eq!(r.aliases().unwrap(), vec![String::from("bar"), String::from("baz")]);
+            }
+
+            #[test]
+            fn has_one_field() {
+                let r = RecordBuilder::new()
+                    .name(String::from("foo"))
+                    .fields(|fab|
+                        fab.push(|fb|
+                            fb.name(String::from("bar"))
+                              .field_type(Schema::String(String::from("boolean")))
+                        )
+                    )
+                    .unwrap();
+
+                let s = String::from(&r);
+                // It's in this order because Serde's JSON serialization puts the fields in
+                // alphabetical order, which is not the Avro cannonical order.
+                let pretty = concat!(
+                    "{",
+                    "\"fields\":[{\"name\":\"bar\",\"type\":{\"type\":\"boolean\"}}],",
+                    "\"name\":\"foo\",",
+                    "\"type\":\"record\"",
+                    "}"
+                );
+
+                assert_eq!(s, pretty);
             }
         }
     }

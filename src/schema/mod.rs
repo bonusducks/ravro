@@ -16,6 +16,8 @@
 pub use self::model::*;
 pub use self::ser::{to_string};
 pub use self::builder::{
+	FieldBuilder,
+	FieldArrayBuilder,
 	RecordBuilder
 };
 
