@@ -200,6 +200,26 @@ impl Schema {
         }
     }
 
+    pub fn symbols(&self) -> Option<Vec<String>> {
+        match *self {
+            Schema::Object(ref value) => {
+                if let Some(&Value::Array(ref value_vec)) = value.find("symbols") {
+                    let mut alias_vec = Vec::new();
+                    for value in value_vec {
+                        match *value {
+                            Value::String(ref s) => { alias_vec.push(s.clone()); }
+                            _ => (),
+                        }
+                    }
+                    Some(alias_vec)
+                } else {
+                    None
+                }
+            },
+            _ => None
+        }
+    }
+
     // Get the raw fields in a record
     pub fn fields(&self) -> Option<&Vec<Value>> {
         match *self {
@@ -211,6 +231,19 @@ impl Schema {
                 }
             }
             _ => None
+        }
+    }
+
+    pub fn is_enum(&self) -> bool {
+        match *self {
+            Schema::Object(ref value) => {
+                if let Some(&Value::String(ref t)) = value.find("type") {
+                    t == "enum"
+                } else {
+                    false
+                }
+            },
+            _ => false
         }
     }
 }

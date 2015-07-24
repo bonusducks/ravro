@@ -16,9 +16,11 @@
 pub use self::model::*;
 pub use self::ser::{to_string};
 pub use self::builder::{
+	EnumBuilder,
 	FieldBuilder,
 	FieldArrayBuilder,
-	RecordBuilder
+	RecordBuilder,
+	SymbolBuilder,
 };
 
 pub mod ser;

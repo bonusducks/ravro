@@ -718,6 +718,112 @@ mod object {
             }
         }
     }
+
+    mod enum_type { // enum is a keyword...
+        use ravro::schema::Schema;
+        use serde::json::builder::ObjectBuilder;
+
+        #[test]
+        fn is_enum() {
+            let val = ObjectBuilder::new()
+                .insert(String::from("type"), String::from("enum"))
+                .insert(String::from("name"), String::from("foo"))
+                .insert_array(String::from("symbols"), |bld| bld.push(String::from("A1")) )
+                .unwrap();
+            let o = Schema::Object(val);
+
+            assert!(o.is_enum());
+        }
+
+        #[test]
+        fn to_string() {
+            let val = ObjectBuilder::new()
+                .insert(String::from("type"), String::from("enum"))
+                .insert(String::from("name"), String::from("foo"))
+                .insert_array(String::from("symbols"), |bld| bld.push(String::from("A1")) )
+                .unwrap();
+            let o = Schema::Object(val);
+
+            let s = o.to_string();
+            // It's in this order because Serde's JSON serialization puts the fields in
+            // alphabetical order.
+            let pretty = concat!(
+                "{",
+                "\"name\":\"foo\",",
+                "\"symbols\":[\"A1\"],",
+                "\"type\":\"enum\"",
+                "}"
+            );
+
+            assert_eq!(s, pretty);
+        }
+
+        mod builder {
+            use ravro::schema::EnumBuilder;
+            //use serde::json::Value;
+
+            #[test]
+            fn is_enum() {
+                let e = EnumBuilder::new()
+                    .unwrap();
+
+                assert!(e.is_enum());
+                assert!(e.fullname().is_err()); // didn't assign a name to the enum.
+            }
+
+            #[test]
+            fn has_name() {
+                let e = EnumBuilder::new()
+                    .name(String::from("foo"))
+                    .unwrap();
+
+                assert_eq!(e.fullname().unwrap(), "foo");
+            }
+
+            #[test]
+            fn has_namespace() {
+                let e = EnumBuilder::new()
+                    .name(String::from("foo"))
+                    .namespace(String::from("x.y"))
+                    .unwrap();
+
+                assert_eq!(e.fullname().unwrap(), "x.y.foo");
+            }
+
+            #[test]
+            fn has_doc() {
+                let e = EnumBuilder::new()
+                    .name(String::from("foo"))
+                    .doc(String::from("yadda yadda"))
+                    .unwrap();
+
+                assert_eq!(e.doc().unwrap(), "yadda yadda");
+            }
+
+            #[test]
+            fn has_aliases() {
+                let aliases_vec = vec![String::from("bar"), String::from("baz")];
+                let e = EnumBuilder::new()
+                    .name(String::from("foo"))
+                    .aliases(aliases_vec)
+                    .unwrap();
+
+                assert_eq!(e.aliases().unwrap(), vec![String::from("bar"), String::from("baz")]);
+            }
+
+            #[test]
+            fn has_symbols() {
+                let e = EnumBuilder::new()
+                    .name(String::from("foo"))
+                    .symbols(|bld|
+                        bld.push("A1").push("A2")
+                    )
+                    .unwrap();
+
+                assert_eq!(e.symbols().unwrap(), vec![String::from("A1"), String::from("A2")]);
+            }
+        }
+    }
 }
 
 mod null {

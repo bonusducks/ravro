@@ -140,3 +140,71 @@ impl RecordBuilder {
 		self
 	}
 }
+
+pub struct SymbolBuilder {
+	array: Vec<Value>,
+}
+
+impl SymbolBuilder {
+	pub fn new() -> SymbolBuilder {
+		SymbolBuilder { array: Vec::new() }
+	}
+
+	pub fn unwrap(self) -> Value {
+		Value::Array(self.array)
+	}
+
+	pub fn push(mut self, symbol: &str) -> SymbolBuilder {
+		self.array.push(Value::String(String::from(symbol)));
+		self
+	}
+}
+
+pub struct EnumBuilder {
+	enum_map: BTreeMap<String, Value>,
+}
+
+impl EnumBuilder {
+	pub fn new() -> EnumBuilder {
+		let mut builder = EnumBuilder { enum_map: BTreeMap::new() };
+		builder.enum_map.insert(String::from("type"), Value::String(String::from("enum")));
+		builder
+	}
+
+	pub fn unwrap(self) -> Schema {
+		Schema::Object(Value::Object(self.enum_map))
+	}
+
+	pub fn name(mut self, n: String) -> EnumBuilder {
+		self.enum_map.insert(String::from("name"), Value::String(n));
+		self
+	}
+
+	pub fn namespace(mut self, ns: String) -> EnumBuilder {
+		self.enum_map.insert(String::from("namespace"), Value::String(ns));
+		self
+	}
+
+	pub fn doc(mut self, doc: String) -> EnumBuilder {
+		self.enum_map.insert(String::from("doc"), Value::String(doc));
+		self
+	}
+
+	pub fn aliases(mut self, aliases: Vec<String>) -> EnumBuilder {
+		let mut array : Vec<Value> = Vec::new();
+		for alias in aliases {
+			array.push(Value::String(alias));
+		}
+		self.enum_map.insert(String::from("aliases"), Value::Array(array));
+		self
+	}
+
+	pub fn symbols<F>(mut self, f: F) -> EnumBuilder where
+		F: FnOnce(SymbolBuilder) -> SymbolBuilder
+	{
+		let builder = SymbolBuilder::new();
+		self.enum_map.insert(String::from("symbols"), f(builder).unwrap());
+		self
+	}
+}
+
