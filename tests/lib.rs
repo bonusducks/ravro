@@ -890,6 +890,73 @@ mod object {
             }
         }
     }
+
+    mod map {
+        use ravro::schema::Schema;
+        use serde::json::builder::ObjectBuilder;
+
+        #[test]
+        fn is_map() {
+            let val = ObjectBuilder::new()
+                .insert(String::from("type"), String::from("map"))
+                .insert(String::from("values"), String::from("string"))
+                .unwrap();
+            let o = Schema::Object(val);
+
+            assert!(o.is_map());
+        }
+
+        #[test]
+        fn to_string() {
+            let val = ObjectBuilder::new()
+                .insert(String::from("type"), String::from("map"))
+                .insert(String::from("values"), String::from("string")) // technically, the items value is a Schema.
+                .unwrap();
+            let o = Schema::Object(val);
+
+            let s = o.to_string();
+            // It's in this order because Serde's JSON serialization puts the fields in
+            // alphabetical order.
+            let pretty = concat!(
+                "{",
+                "\"type\":\"map\",",
+                "\"values\":\"string\"",
+                "}"
+            );
+
+            assert_eq!(s, pretty);
+        }
+
+        mod builder {
+            use ravro::schema::{MapBuilder, Schema};
+
+            #[test]
+            fn is_map() {
+                let a = MapBuilder::new()
+                    .unwrap();
+
+                assert!(a.is_map());
+            }
+
+            #[test]
+            fn has_values() {
+                let a = MapBuilder::new()
+                    .values(Schema::String(String::from("boolean")))
+                    .unwrap();
+
+                let s = a.to_string();
+
+                let pretty = concat!(
+                    "{",
+                    "\"type\":\"map\",",
+                    "\"values\":{\"type\":\"boolean\"}",
+                    "}"
+                );
+
+                assert_eq!(s, pretty);
+            }
+        }
+    }
 }
 
 mod null {

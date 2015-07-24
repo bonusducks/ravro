@@ -57,14 +57,10 @@ impl Schema {
     pub fn is_array(&self) -> bool {
         match *self {
             Schema::Array(_)   => true,
-            Schema::Object(ref value) => {
+            Schema::Object(_) => {
                 // There is a complex type 'array', and the, err, I guess native array type.
                 // This is the complex type.
-                if let Some(&Value::String(ref t)) = value.find("type") {
-                    t == "array"
-                } else {
-                    false
-                }
+                self.is_complex_type("array")
             }
             _ => false,
         }
@@ -117,10 +113,22 @@ impl Schema {
     }
 
     pub fn is_record(&self) -> bool {
+        self.is_complex_type("record")
+    }
+
+    pub fn is_enum(&self) -> bool {
+        self.is_complex_type("enum")
+    }
+
+    pub fn is_map(&self) -> bool {
+        self.is_complex_type("map")
+    }
+
+    fn is_complex_type(&self, type_name: &str) -> bool {
         match *self {
             Schema::Object(ref value) => {
                 if let Some(&Value::String(ref t)) = value.find("type") {
-                    t == "record"
+                    t == type_name
                 } else {
                     false
                 }
@@ -240,19 +248,6 @@ impl Schema {
                 }
             }
             _ => None
-        }
-    }
-
-    pub fn is_enum(&self) -> bool {
-        match *self {
-            Schema::Object(ref value) => {
-                if let Some(&Value::String(ref t)) = value.find("type") {
-                    t == "enum"
-                } else {
-                    false
-                }
-            },
-            _ => false
         }
     }
 }

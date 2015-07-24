@@ -20,6 +20,7 @@ pub use self::builder::{
 	EnumBuilder,
 	FieldBuilder,
 	FieldArrayBuilder,
+	MapBuilder,
 	RecordBuilder,
 	SymbolBuilder,
 };

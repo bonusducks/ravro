@@ -233,3 +233,28 @@ impl ArrayBuilder {
 	}
 }
 
+// This is for an array complex type, not a union of schemas represented by
+// a JSON array.
+pub struct MapBuilder {
+	map: BTreeMap<String, Value>,
+}
+
+impl MapBuilder {
+	pub fn new() -> MapBuilder {
+		let mut builder = MapBuilder { map: BTreeMap::new() };
+		builder.map.insert(String::from("type"), Value::String(String::from("map")));
+		builder
+	}
+
+	pub fn unwrap(self) -> Schema {
+		Schema::Object(Value::Object(self.map))
+	}
+
+	pub fn values(mut self, values_type: Schema) -> MapBuilder {
+		if let Some(Schema::Object(value)) = values_type.as_object() {
+			self.map.insert(String::from("values"), value);
+		}
+		self
+	}
+}
+
