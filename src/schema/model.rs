@@ -57,6 +57,15 @@ impl Schema {
     pub fn is_array(&self) -> bool {
         match *self {
             Schema::Array(_)   => true,
+            Schema::Object(ref value) => {
+                // There is a complex type 'array', and the, err, I guess native array type.
+                // This is the complex type.
+                if let Some(&Value::String(ref t)) = value.find("type") {
+                    t == "array"
+                } else {
+                    false
+                }
+            }
             _ => false,
         }
     }

@@ -760,7 +760,6 @@ mod object {
 
         mod builder {
             use ravro::schema::EnumBuilder;
-            //use serde::json::Value;
 
             #[test]
             fn is_enum() {
@@ -821,6 +820,73 @@ mod object {
                     .unwrap();
 
                 assert_eq!(e.symbols().unwrap(), vec![String::from("A1"), String::from("A2")]);
+            }
+        }
+    }
+
+    mod array {
+        use ravro::schema::Schema;
+        use serde::json::builder::ObjectBuilder;
+
+        #[test]
+        fn is_array() {
+            let val = ObjectBuilder::new()
+                .insert(String::from("type"), String::from("array"))
+                .insert(String::from("items"), String::from("string"))
+                .unwrap();
+            let o = Schema::Object(val);
+
+            assert!(o.is_array());
+        }
+
+        #[test]
+        fn to_string() {
+            let val = ObjectBuilder::new()
+                .insert(String::from("type"), String::from("array"))
+                .insert(String::from("items"), String::from("string")) // technically, the items value is a Schema.
+                .unwrap();
+            let o = Schema::Object(val);
+
+            let s = o.to_string();
+            // It's in this order because Serde's JSON serialization puts the fields in
+            // alphabetical order.
+            let pretty = concat!(
+                "{",
+                "\"items\":\"string\",",
+                "\"type\":\"array\"",
+                "}"
+            );
+
+            assert_eq!(s, pretty);
+        }
+
+        mod builder {
+            use ravro::schema::{ArrayBuilder, Schema};
+
+            #[test]
+            fn is_array() {
+                let a = ArrayBuilder::new()
+                    .unwrap();
+
+                assert!(a.is_array());
+            }
+
+            #[test]
+            fn has_items() {
+                let a = ArrayBuilder::new()
+                    .items(Schema::String(String::from("boolean")))
+                    .unwrap();
+
+                let s = a.to_string();
+
+                let pretty = concat!(
+                    "{",
+                    "\"items\":{\"type\":\"boolean\"},",
+                    "\"type\":\"array\"",
+                    "}"
+                );
+
+                assert_eq!(s, pretty);
             }
         }
     }

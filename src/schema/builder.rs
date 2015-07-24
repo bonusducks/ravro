@@ -208,3 +208,28 @@ impl EnumBuilder {
 	}
 }
 
+// This is for an array complex type, not a union of schemas represented by
+// a JSON array.
+pub struct ArrayBuilder {
+	array_map: BTreeMap<String, Value>,
+}
+
+impl ArrayBuilder {
+	pub fn new() -> ArrayBuilder {
+		let mut builder = ArrayBuilder { array_map: BTreeMap::new() };
+		builder.array_map.insert(String::from("type"), Value::String(String::from("array")));
+		builder
+	}
+
+	pub fn unwrap(self) -> Schema {
+		Schema::Object(Value::Object(self.array_map))
+	}
+
+	pub fn items(mut self, items: Schema) -> ArrayBuilder {
+		if let Some(Schema::Object(value)) = items.as_object() {
+			self.array_map.insert(String::from("items"), value);
+		}
+		self
+	}
+}
+
