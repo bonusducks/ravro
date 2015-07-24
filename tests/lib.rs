@@ -957,6 +957,98 @@ mod object {
             }
         }
     }
+
+    mod fixed {
+        use ravro::schema::Schema;
+        use serde::json::builder::ObjectBuilder;
+
+        #[test]
+        fn is_map() {
+            let val = ObjectBuilder::new()
+                .insert(String::from("type"), String::from("fixed"))
+                .insert(String::from("size"), 16)
+                .insert(String::from("name"), String::from("md5"))
+                .unwrap();
+            let o = Schema::Object(val);
+
+            assert!(o.is_fixed());
+        }
+
+        #[test]
+        fn to_string() {
+            let val = ObjectBuilder::new()
+                .insert(String::from("type"), String::from("fixed"))
+                .insert(String::from("size"), 16)
+                .insert(String::from("name"), String::from("md5"))
+                .unwrap();
+            let o = Schema::Object(val);
+
+            let s = o.to_string();
+            // It's in this order because Serde's JSON serialization puts the fields in
+            // alphabetical order.
+            let pretty = concat!(
+                "{",
+                "\"name\":\"md5\",",
+                "\"size\":16,",
+                "\"type\":\"fixed\"",
+                "}"
+            );
+
+            assert_eq!(s, pretty);
+        }
+
+        mod builder {
+            use ravro::schema::FixedBuilder;
+
+            #[test]
+            fn is_fixed() {
+                let f = FixedBuilder::new()
+                    .unwrap();
+
+                assert!(f.is_fixed());
+            }
+
+            #[test]
+            fn has_name() {
+                let f = FixedBuilder::new()
+                    .name(String::from("foo"))
+                    .unwrap();
+
+                assert_eq!(f.fullname().unwrap(), "foo");
+            }
+
+            #[test]
+            fn has_namespace() {
+                let f = FixedBuilder::new()
+                    .name(String::from("foo"))
+                    .namespace(String::from("x.y"))
+                    .unwrap();
+
+                assert_eq!(f.fullname().unwrap(), "x.y.foo");
+            }
+
+            #[test]
+            fn has_aliases() {
+                let aliases_vec = vec![String::from("bar"), String::from("baz")];
+                let f = FixedBuilder::new()
+                    .name(String::from("foo"))
+                    .aliases(aliases_vec)
+                    .unwrap();
+
+                assert_eq!(f.aliases().unwrap(), vec![String::from("bar"), String::from("baz")]);
+            }
+
+            #[test]
+            fn has_size() {
+                let f = FixedBuilder::new()
+                    .name(String::from("foo"))
+                    .size(16)
+                    .unwrap();
+
+                assert_eq!(f.size().unwrap(), 16);
+            }
+        }
+    }
 }
 
 mod null {

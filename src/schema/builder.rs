@@ -258,3 +258,43 @@ impl MapBuilder {
 	}
 }
 
+pub struct FixedBuilder {
+	fixed: BTreeMap<String, Value>,
+}
+
+impl FixedBuilder {
+	pub fn new() -> FixedBuilder {
+		let mut builder = FixedBuilder { fixed: BTreeMap::new() };
+		builder.fixed.insert(String::from("type"), Value::String(String::from("fixed")));
+		builder
+	}
+
+	pub fn unwrap(self) -> Schema {
+		Schema::Object(Value::Object(self.fixed))
+	}
+
+	pub fn name(mut self, n: String) -> FixedBuilder {
+		self.fixed.insert(String::from("name"), Value::String(n));
+		self
+	}
+
+	pub fn namespace(mut self, ns: String) -> FixedBuilder {
+		self.fixed.insert(String::from("namespace"), Value::String(ns));
+		self
+	}
+
+	pub fn aliases(mut self, aliases: Vec<String>) -> FixedBuilder {
+		let mut array : Vec<Value> = Vec::new();
+		for alias in aliases {
+			array.push(Value::String(alias));
+		}
+		self.fixed.insert(String::from("aliases"), Value::Array(array));
+		self
+	}
+
+	pub fn size(mut self, size: u64) -> FixedBuilder {
+		self.fixed.insert(String::from("size"), Value::U64(size));
+		self
+	}
+}
+

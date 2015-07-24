@@ -124,6 +124,10 @@ impl Schema {
         self.is_complex_type("map")
     }
 
+    pub fn is_fixed(&self) -> bool {
+        self.is_complex_type("fixed")
+    }
+
     fn is_complex_type(&self, type_name: &str) -> bool {
         match *self {
             Schema::Object(ref value) => {
@@ -247,6 +251,19 @@ impl Schema {
                     None
                 }
             }
+            _ => None
+        }
+    }
+
+    pub fn size(&self) -> Option<u64> {
+        match *self {
+            Schema::Object(ref value) => {
+                if let Some(&Value::U64(size)) = value.find("size") {
+                    Some(size)
+                } else {
+                    None
+                }
+            },
             _ => None
         }
     }
