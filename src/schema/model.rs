@@ -119,8 +119,8 @@ impl Schema {
                     .unwrap();
                 Some(Schema::Object(value))
             },
-            Schema::Union(ref v) => {
-                let val_array = v.iter()
+            Schema::Union(ref vec) => {
+                let val_array = vec.iter()
                     .map(|e|
                         if let Some(Schema::Object(v)) = e.as_object() {
                             v
@@ -274,17 +274,26 @@ impl ToString for Schema {
     }
 }
 
+// When converting to string, keep it to JSON but the more compact style.
+// For example, "string" and {"type":"string"} are always equivalent types,
+// so we'll prefer "string" for compactness of representation.
 impl<'a> From<&'a Schema> for String {
     fn from(s: &'a Schema) -> String {
-        if let Some(Schema::Object(ref v)) = s.as_object() {
-            let r = to_string(&v);
-            if r.is_ok() {
-                r.unwrap()
-            } else {
-                String::from("")
+        match *s {
+            Schema::Null => String::from("\"null\""),
+            Schema::String(ref s) => format!("\"{}\"", s.clone()),
+            Schema::Object(ref v) => {
+                let result = to_string(&v);
+                if result.is_ok() {
+                    result.unwrap()
+                } else {
+                    String::from("")
+                }
+            },
+            Schema::Union(ref vec) => {
+                let string_vec : Vec<String> = vec.iter().map(|schema| String::from(schema) ).collect();
+                format!("[{}]", string_vec.connect(","))
             }
-        } else {
-            String::from("")
         }
     }
 }
