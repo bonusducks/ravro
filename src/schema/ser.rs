@@ -20,7 +20,7 @@ pub fn to_string(schema: &Schema) -> Result<String, FromUtf8Error> {
 	match *schema {
 		Schema::Null => Ok(format!("\"{}\"", "null")),
 		Schema::String(ref s) => Ok(format!("\"{}\"", s.clone())),
-		Schema::Array(ref v) => vec_to_string(&v),
+		Schema::Union(ref v) => vec_to_string(&v),
 		_ => Ok("".to_string()),
 	}
 }

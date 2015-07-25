@@ -76,9 +76,9 @@ mod primitive {
         }
 
         #[test]
-        fn array_is_not_primitive() {
-            let a = Schema::Array(vec!());
-            assert_eq!(a.is_primitive(), false);
+        fn union_is_not_primitive() {
+            let u = Schema::Union(vec!());
+            assert_eq!(u.is_primitive(), false);
         }
 
         #[test]
@@ -167,48 +167,48 @@ mod primitive {
     }
 }
 
-mod array {
-    mod is_array {
+mod union {
+    mod is_union {
         use ravro::schema::Schema;
         use serde::json::{self, Value};
 
         #[test]
-        fn is_simple_array() {
+        fn is_simple_union() {
             let s1 = Schema::String(String::from("boolean"));
             let s2 = Schema::String(String::from("int"));
 
-            let arr_schema = Schema::Array(vec!(s1, s2));
+            let union = Schema::Union(vec!(s1, s2));
 
-            assert!(arr_schema.is_array());
+            assert!(union.is_union());
         }
 
         #[test]
-        fn is_empty_array() {
-            // I haven't seen anything that says an empty Avro array is illegal, although
+        fn is_empty_union() {
+            // I haven't seen anything that says an empty Avro union is illegal, although
             // it certainly would be very useufl...
-            let arr_schema = Schema::Array(vec!());
+            let union = Schema::Union(vec!());
 
-            assert!(arr_schema.is_array());
+            assert!(union.is_union());
         }
 
         #[test]
-        fn primitive_is_not_array() {
+        fn primitive_is_not_union() {
             let s = Schema::String(String::from("boolean"));
-            assert_eq!(s.is_array(), false);
+            assert_eq!(s.is_union(), false);
         }
 
         #[test]
-        fn object_is_not_array() {
+        fn object_is_not_union() {
             let val : Value = json::from_str(r#"{"type":"string"}"#).unwrap(); // about as simple an object as we can get
             let s = Schema::Object(val);
 
-            assert_eq!(s.is_array(), false);
+            assert_eq!(s.is_union(), false);
         }
 
         #[test]
-        fn null_is_not_array() {
+        fn null_is_not_union() {
             let n = Schema::Null;
-            assert_eq!(n.is_array(), false);
+            assert_eq!(n.is_union(), false);
         }
     }
 
@@ -216,11 +216,11 @@ mod array {
         use ravro::schema::{self, Schema};
 
         #[test]
-        fn array_of_primitives() {
+        fn union_of_primitives() {
             let s1 = Schema::String(String::from("boolean"));
             let s2 = Schema::String(String::from("int"));
-            let arr_schema = Schema::Array(vec!(s1, s2));
-            let s = schema::to_string(&arr_schema).unwrap();
+            let union = Schema::Union(vec!(s1, s2));
+            let s = schema::to_string(&union).unwrap();
 
             assert_eq!(s, String::from(r#"["boolean","int"]"#));
         }
@@ -247,9 +247,9 @@ mod object {
         }
 
         #[test]
-        fn array_is_not_object() {
-            let a = Schema::Array(vec![]);
-            assert_eq!(a.is_object(), false);
+        fn union_is_not_object() {
+            let u = Schema::Union(vec![]);
+            assert_eq!(u.is_object(), false);
         }
 
         #[test]
@@ -286,8 +286,8 @@ mod object {
 
         // Not sure if this is strictly corrct...
         #[test]
-        fn array_as_object() {
-            // While the following line is hte simplest representation of the array, because
+        fn union_as_object() {
+            // While the following line is hte simplest representation of the union, because
             // the implementation is doing to_object on each element, we are getting the
             // longer, {"type":"blah"} representation. This may not be a good thing in the
             // long run.
@@ -297,9 +297,9 @@ mod object {
 
             let s1 = Schema::String(String::from("boolean"));
             let s2 = Schema::String(String::from("int"));
-            let arr_schema = Schema::Array(vec!(s1, s2));
+            let union = Schema::Union(vec!(s1, s2));
 
-            let o2 = arr_schema.as_object().unwrap();
+            let o2 = union.as_object().unwrap();
 
             assert_eq!(o, o2);
         }
@@ -1069,9 +1069,9 @@ mod null {
         }
 
         #[test]
-        fn array_is_not_null() {
-            let a = Schema::Array(vec![]);
-            assert_eq!(a.is_null(), false);
+        fn union_is_not_null() {
+            let u = Schema::Union(vec![]);
+            assert_eq!(u.is_null(), false);
         }
 
         #[test]

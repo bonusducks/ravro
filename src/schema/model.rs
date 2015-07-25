@@ -21,7 +21,7 @@ use serde::json::ser::to_string;
 pub enum Schema {
     Null,
     String(String),
-    Array(Vec<Schema>),
+    Union(Vec<Schema>),
     Object(Value)
 }
 
@@ -54,54 +54,10 @@ impl Schema {
         }
     }
 
-    pub fn is_array(&self) -> bool {
-        match *self {
-            Schema::Array(_)   => true,
-            Schema::Object(_) => {
-                // There is a complex type 'array', and the, err, I guess native array type.
-                // This is the complex type.
-                self.is_complex_type("array")
-            }
-            _ => false,
-        }
-    }
-
     pub fn is_object(&self) -> bool {
         match *self {
             Schema::Object(_) => true,
             _ => false,
-        }
-    }
-
-    /// Returns a new Schema representing the instance as a Schema::Object.
-    /// If it's already a Schema::Object instance, a copy is returned.
-    pub fn as_object(&self) -> Option<Schema> {
-        match *self {
-            Schema::Object(_) => Some(self.clone()),
-            Schema::String(ref s) => {
-                let value = ObjectBuilder::new()
-                    .insert(String::from("type"), s.clone())
-                    .unwrap();
-                Some(Schema::Object(value))
-            },
-            Schema::Array(ref v) => {
-                let val_array = v.iter()
-                    .map(|e|
-                        if let Some(Schema::Object(v)) = e.as_object() {
-                            v
-                        } else {
-                            Value::String(String::from("null")) // really shouldn't get here...
-                        }
-                    )
-                    .collect();
-                Some(Schema::Object(Value::Array(val_array)))
-            },
-            Schema::Null => {
-                let value = ObjectBuilder::new()
-                    .insert(String::from("type"), String::from("null"))
-                    .unwrap();
-                Some(Schema::Object(value))
-            }
         }
     }
 
@@ -110,6 +66,17 @@ impl Schema {
             Schema::Null => true,
             _ => false,
         }
+    }
+
+    pub fn is_union(&self) -> bool {
+        match *self {
+            Schema::Union(_)   => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_array(&self) -> bool {
+        self.is_complex_type("array")
     }
 
     pub fn is_record(&self) -> bool {
@@ -138,6 +105,38 @@ impl Schema {
                 }
             },
             _ => false
+        }
+    }
+
+    /// Returns a new Schema representing the instance as a Schema::Object.
+    /// If it's already a Schema::Object instance, a copy is returned.
+    pub fn as_object(&self) -> Option<Schema> {
+        match *self {
+            Schema::Object(_) => Some(self.clone()),
+            Schema::String(ref s) => {
+                let value = ObjectBuilder::new()
+                    .insert(String::from("type"), s.clone())
+                    .unwrap();
+                Some(Schema::Object(value))
+            },
+            Schema::Union(ref v) => {
+                let val_array = v.iter()
+                    .map(|e|
+                        if let Some(Schema::Object(v)) = e.as_object() {
+                            v
+                        } else {
+                            Value::String(String::from("null")) // really shouldn't get here...
+                        }
+                    )
+                    .collect();
+                Some(Schema::Object(Value::Array(val_array)))
+            },
+            Schema::Null => {
+                let value = ObjectBuilder::new()
+                    .insert(String::from("type"), String::from("null"))
+                    .unwrap();
+                Some(Schema::Object(value))
+            }
         }
     }
 
