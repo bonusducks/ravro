@@ -24,6 +24,7 @@ pub use self::builder::{
 	MapBuilder,
 	RecordBuilder,
 	SymbolBuilder,
+	UnionBuilder
 };
 
 pub mod ser;

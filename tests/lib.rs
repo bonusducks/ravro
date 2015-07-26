@@ -225,6 +225,155 @@ mod union {
             assert_eq!(s, String::from(r#"["boolean","int"]"#));
         }
     }
+
+    mod builder {
+        use ravro::schema::{Schema, UnionBuilder};
+        //use serde::json::Value;
+
+        #[test]
+        fn is_union() {
+            let u = UnionBuilder::new()
+                    .unwrap();
+
+            assert!(u.is_union());
+            assert!(u.fullname().is_err()); // unions don't have names
+        }
+
+        #[test]
+        fn has_fixed() {
+            let u = UnionBuilder::new()
+                        .push_fixed(|bld|
+                            bld.name("md5").namespace("x.y").size(16)
+                        )
+                        .unwrap();
+
+            let s = String::from(&u);
+
+            let pretty = concat!(
+                "[",
+                "{\"name\":\"md5\",",
+                "\"namespace\":\"x.y\",",
+                "\"size\":16,",
+                "\"type\":\"fixed\"}",
+                "]"
+            );
+
+            assert_eq!(s, pretty);
+        }
+
+        #[test]
+        fn has_map() {
+            let u = UnionBuilder::new()
+                        .push_map(|bld|
+                            bld.values(Schema::String(String::from("string")))
+                        )
+                        .unwrap();
+
+            let s = String::from(&u);
+
+            let pretty = concat!(
+                "[{",
+                "\"type\":\"map\",",
+                "\"values\":{\"type\":\"string\"}",
+                "}]"
+            );
+
+            assert_eq!(s, pretty);
+        }
+
+        #[test]
+        fn has_array() {
+            let u = UnionBuilder::new()
+                        .push_array(|bld|
+                            bld.items(Schema::String(String::from("string")))
+                        )
+                        .unwrap();
+
+            let s = String::from(&u);
+
+            let pretty = concat!(
+                "[{",
+                "\"items\":{\"type\":\"string\"},",
+                "\"type\":\"array\"",
+                "}]"
+            );
+
+            assert_eq!(s, pretty);
+        }
+
+        #[test]
+        fn has_enum() {
+            let u = UnionBuilder::new()
+                        .push_enum(|bld|
+                            bld
+                                .name("foo")
+                                .namespace("x.y")
+                                .doc("bar baz")
+                                .symbols(|sb| sb.push("A1").push("A2") )
+                        )
+                        .unwrap();
+
+            let s = String::from(&u);
+
+            let pretty = concat!(
+                "[{",
+                "\"doc\":\"bar baz\",",
+                "\"name\":\"foo\",",
+                "\"namespace\":\"x.y\",",
+                "\"symbols\":[\"A1\",\"A2\"],",
+                "\"type\":\"enum\"",
+                "}]"
+            );
+
+            assert_eq!(s, pretty);
+        }
+
+        #[test]
+        fn has_record() {
+            let u = UnionBuilder::new()
+                        .push_record(|bld|
+                            bld
+                                .name("foo")
+                                .namespace("x.y")
+                                .doc("bar baz")
+                                .fields(|fab|
+                                    fab.push(|fb| fb.name("f1").field_type(Schema::String(String::from("int"))) )
+                                       .push(|fb| fb.name("f2").field_type(Schema::String(String::from("boolean"))) )
+                                )
+                        )
+                        .unwrap();
+
+            let s = String::from(&u);
+
+            let pretty = concat!(
+                "[{",
+                "\"doc\":\"bar baz\",",
+                "\"fields\":[",
+                "{\"name\":\"f1\",\"type\":{\"type\":\"int\"}},",
+                "{\"name\":\"f2\",\"type\":{\"type\":\"boolean\"}}],",
+                "\"name\":\"foo\",",
+                "\"namespace\":\"x.y\",",
+                "\"type\":\"record\"",
+                "}]"
+            );
+
+            assert_eq!(s, pretty);
+        }
+
+        #[test]
+        fn has_schema() {
+            let u = UnionBuilder::new()
+                        .push_schema(Schema::String(String::from("int")))
+                        .push_schema(Schema::String(String::from("boolean")))
+                        .unwrap();
+
+            let s = String::from(&u);
+
+            let pretty = "[\"int\",\"boolean\"]";
+
+            assert_eq!(s, pretty);
+        }
+    }
 }
 
 mod object {
@@ -535,7 +684,7 @@ mod object {
             #[test]
             fn has_name() {
                 let r = RecordBuilder::new()
-                    .name(String::from("foo"))
+                    .name("foo")
                     .unwrap();
 
                 assert!(r.is_record());
@@ -545,8 +694,8 @@ mod object {
             #[test]
             fn has_namespace() {
                 let r = RecordBuilder::new()
-                    .name(String::from("foo"))
-                    .namespace(String::from("x.y"))
+                    .name("foo")
+                    .namespace("x.y")
                     .unwrap();
 
                 assert_eq!(r.fullname().unwrap(), "x.y.foo");
@@ -555,8 +704,8 @@ mod object {
             #[test]
             fn has_doc() {
                 let r = RecordBuilder::new()
-                    .name(String::from("foo"))
-                    .doc(String::from("yadda yadda"))
+                    .name("foo")
+                    .doc("yadda yadda")
                     .unwrap();
 
                 assert_eq!(r.doc().unwrap(), "yadda yadda");
@@ -564,9 +713,9 @@ mod object {
 
             #[test]
             fn has_aliases() {
-                let aliases_vec = vec![String::from("bar"), String::from("baz")];
+                let aliases_vec = vec!["bar", "baz"];
                 let r = RecordBuilder::new()
-                    .name(String::from("foo"))
+                    .name("foo")
                     .aliases(aliases_vec)
                     .unwrap();
 
@@ -576,10 +725,10 @@ mod object {
             #[test]
             fn has_one_field() {
                 let r = RecordBuilder::new()
-                    .name(String::from("foo"))
+                    .name("foo")
                     .fields(|fab|
                         fab.push(|fb|
-                            fb.name(String::from("bar"))
+                            fb.name("bar")
                               .field_type(Schema::String(String::from("boolean")))
                         )
                     )
@@ -602,17 +751,17 @@ mod object {
             #[test]
             fn has_multiple_fields() {
                 let r = RecordBuilder::new()
-                    .name(String::from("foo"))
+                    .name("foo")
                     .fields(|bld|
                         bld
                         .push(|fb|
-                            fb.name(String::from("bar"))
+                            fb.name("bar")
                               .field_type(Schema::String(String::from("boolean")))
                         )
                         .push(|fb|
-                            fb.name(String::from("baz"))
+                            fb.name("baz")
                               .field_type(Schema::String(String::from("int")))
-                              .doc(String::from("yadda yadda"))
+                              .doc("yadda yadda")
                         )
                     )
                     .unwrap();
@@ -637,10 +786,10 @@ mod object {
             #[test]
             fn has_field_with_order() {
                 let r = RecordBuilder::new()
-                    .name(String::from("foo"))
+                    .name("foo")
                     .fields(|fab|
                         fab.push(|fb|
-                            fb.name(String::from("bar"))
+                            fb.name("bar")
                               .field_type(Schema::String(String::from("string")))
                               .order(FieldSortOrder::Ascending)
                         )
@@ -663,13 +812,13 @@ mod object {
 
             #[test]
             fn has_field_with_aliases() {
-                let aliases_vec = vec![String::from("bar"), String::from("baz")];
+                let aliases_vec = vec!["bar", "baz"];
 
                 let r = RecordBuilder::new()
-                    .name(String::from("foo"))
+                    .name("foo")
                     .fields(|fab|
                         fab.push(|fb|
-                            fb.name(String::from("bar"))
+                            fb.name("bar")
                               .field_type(Schema::String(String::from("string")))
                               .aliases(aliases_vec)
                         )
@@ -693,10 +842,10 @@ mod object {
             #[test]
             fn has_field_with_default() {
                 let r = RecordBuilder::new()
-                    .name(String::from("foo"))
+                    .name("foo")
                     .fields(|fab|
                         fab.push(|fb|
-                            fb.name(String::from("bar"))
+                            fb.name("bar")
                               .field_type(Schema::String(String::from("string")))
                               .default(Value::String(String::from("one two three")))
                         )
@@ -773,7 +922,7 @@ mod object {
             #[test]
             fn has_name() {
                 let e = EnumBuilder::new()
-                    .name(String::from("foo"))
+                    .name("foo")
                     .unwrap();
 
                 assert_eq!(e.fullname().unwrap(), "foo");
@@ -782,8 +931,8 @@ mod object {
             #[test]
             fn has_namespace() {
                 let e = EnumBuilder::new()
-                    .name(String::from("foo"))
-                    .namespace(String::from("x.y"))
+                    .name("foo")
+                    .namespace("x.y")
                     .unwrap();
 
                 assert_eq!(e.fullname().unwrap(), "x.y.foo");
@@ -792,8 +941,8 @@ mod object {
             #[test]
             fn has_doc() {
                 let e = EnumBuilder::new()
-                    .name(String::from("foo"))
-                    .doc(String::from("yadda yadda"))
+                    .name("foo")
+                    .doc("yadda yadda")
                     .unwrap();
 
                 assert_eq!(e.doc().unwrap(), "yadda yadda");
@@ -801,9 +950,9 @@ mod object {
 
             #[test]
             fn has_aliases() {
-                let aliases_vec = vec![String::from("bar"), String::from("baz")];
+                let aliases_vec = vec!["bar", "baz"];
                 let e = EnumBuilder::new()
-                    .name(String::from("foo"))
+                    .name("foo")
                     .aliases(aliases_vec)
                     .unwrap();
 
@@ -813,7 +962,7 @@ mod object {
             #[test]
             fn has_symbols() {
                 let e = EnumBuilder::new()
-                    .name(String::from("foo"))
+                    .name("foo")
                     .symbols(|bld|
                         bld.push("A1").push("A2")
                     )
@@ -1011,7 +1160,7 @@ mod object {
             #[test]
             fn has_name() {
                 let f = FixedBuilder::new()
-                    .name(String::from("foo"))
+                    .name("foo")
                     .unwrap();
 
                 assert_eq!(f.fullname().unwrap(), "foo");
@@ -1020,8 +1169,8 @@ mod object {
             #[test]
             fn has_namespace() {
                 let f = FixedBuilder::new()
-                    .name(String::from("foo"))
-                    .namespace(String::from("x.y"))
+                    .name("foo")
+                    .namespace("x.y")
                     .unwrap();
 
                 assert_eq!(f.fullname().unwrap(), "x.y.foo");
@@ -1029,9 +1178,9 @@ mod object {
 
             #[test]
             fn has_aliases() {
-                let aliases_vec = vec![String::from("bar"), String::from("baz")];
+                let aliases_vec = vec!["bar", "baz"];
                 let f = FixedBuilder::new()
-                    .name(String::from("foo"))
+                    .name("foo")
                     .aliases(aliases_vec)
                     .unwrap();
 
@@ -1041,7 +1190,7 @@ mod object {
             #[test]
             fn has_size() {
                 let f = FixedBuilder::new()
-                    .name(String::from("foo"))
+                    .name("foo")
                     .size(16)
                     .unwrap();
 
