@@ -736,6 +736,96 @@ mod object {
             }
         }
 
+        mod de {
+            use ravro::schema::{self, RecordBuilder, Schema};
+
+            #[test]
+            fn rec_1() {
+                let r = RecordBuilder::new()
+                    .name("foo")
+                    .fields(|fab| fab )  // empty fields array
+                    .unwrap();
+
+                let pretty = concat!(
+                    "{",
+                    "\"fields\":[],",
+                    "\"name\":\"foo\",",
+                    "\"type\":\"record\"",
+                    "}"
+                );
+
+                let r2 = schema::from_str(pretty).unwrap();
+
+                assert_eq!(r, r2);
+            }
+
+            #[test]
+            fn rec_2() {
+                let r = RecordBuilder::new()
+                    .name("foo")
+                    .fields(|bld|
+                        bld
+                        .push(|fb|
+                            fb.name("bar")
+                              .field_type(Schema::String(String::from("boolean")))
+                        )
+                        .push(|fb|
+                            fb.name("baz")
+                              .field_type(Schema::String(String::from("int")))
+                              .doc("yadda yadda")
+                        )
+                    )
+                    .unwrap();
+
+                // It's in this order because Serde's JSON serialization puts the fields in
+                // alphabetical order, which is not the Avro cannonical order.
+                let pretty = concat!(
+                    "{",
+                    "\"fields\":[",
+                    "{\"name\":\"bar\",\"type\":{\"type\":\"boolean\"}},",
+                    "{\"doc\":\"yadda yadda\",\"name\":\"baz\",\"type\":{\"type\":\"int\"}}",
+                    "],",
+                    "\"name\":\"foo\",",
+                    "\"type\":\"record\"",
+                    "}"
+                );
+
+                let r2 = schema::from_str(pretty).unwrap();
+
+                assert_eq!(r, r2);
+            }
+
+            #[test]
+            fn rec_3() {
+                let aliases_vec = vec!["bar", "baz"];
+
+                let r = RecordBuilder::new()
+                    .name("foo")
+                    .fields(|fab|
+                        fab.push(|fb|
+                            fb.name("bar")
+                              .field_type(Schema::String(String::from("string")))
+                              .aliases(aliases_vec)
+                        )
+                    )
+                    .unwrap();
+
+                // It's in this order because Serde's JSON serialization puts the fields in
+                // alphabetical order, which is not the Avro cannonical order.
+                let pretty = concat!(
+                    "{",
+                    "\"fields\":[{\"aliases\":[\"bar\",\"baz\"],\"name\":\"bar\",\"type\":{\"type\":\"string\"}}],",
+                    "\"name\":\"foo\",",
+                    "\"type\":\"record\"",
+                    "}"
+                );
+
+                let r2 = schema::from_str(pretty).unwrap();
+
+                assert_eq!(r, r2);
+            }
+        }
+
         mod builder {
             use ravro::schema::{FieldSortOrder, RecordBuilder, Schema};
             use serde::json::Value;
@@ -975,6 +1065,32 @@ mod object {
             assert_eq!(s, pretty);
         }
 
+        mod de {
+            use ravro::schema::{self, EnumBuilder};
+            
+            #[test]
+            fn enum_1() {
+                let e = EnumBuilder::new()
+                    .name("foo")
+                    .symbols(|bld|
+                        bld.push("A1").push("A2")
+                    )
+                    .unwrap();
+
+                let pretty = concat!(
+                    "{",
+                    "\"name\":\"foo\",",
+                    "\"symbols\":[\"A1\",\"A2\"],",
+                    "\"type\":\"enum\"",
+                    "}"
+                );
+
+                let e2 = schema::from_str(pretty).unwrap();
+
+                assert_eq!(e, e2);
+            }
+        }
+
         mod builder {
             use ravro::schema::EnumBuilder;
 
@@ -1077,6 +1193,28 @@ mod object {
             assert_eq!(s, pretty);
         }
 
+        mod de {
+            use ravro::schema::{self, ArrayBuilder, Schema};
+
+            #[test]
+            fn array_1() {
+                let a = ArrayBuilder::new()
+                    .items(Schema::String(String::from("boolean")))
+                    .unwrap();
+
+                let pretty = concat!(
+                    "{",
+                    "\"items\":{\"type\":\"boolean\"},",
+                    "\"type\":\"array\"",
+                    "}"
+                );
+
+                let a2 = schema::from_str(pretty).unwrap();
+
+                assert_eq!(a, a2);
+            }
+        }
+
         mod builder {
             use ravro::schema::{ArrayBuilder, Schema};
 
@@ -1142,6 +1280,28 @@ mod object {
             );
 
             assert_eq!(s, pretty);
+        }
+
+        mod de {
+            use ravro::schema::{self, MapBuilder, Schema};
+
+            #[test]
+            fn map_1() {
+                let a = MapBuilder::new()
+                    .values(Schema::String(String::from("boolean")))
+                    .unwrap();
+
+                let pretty = concat!(
+                    "{",
+                    "\"type\":\"map\",",
+                    "\"values\":{\"type\":\"boolean\"}",
+                    "}"
+                );
+
+                let a2 = schema::from_str(pretty).unwrap();
+
+                assert_eq!(a, a2);
+            }
         }
 
         mod builder {
@@ -1212,6 +1372,30 @@ mod object {
             );
 
             assert_eq!(s, pretty);
+        }
+
+        mod de {
+            use ravro::schema::{self, FixedBuilder};
+
+            #[test]
+            fn fixed_1() {
+                let f = FixedBuilder::new()
+                    .name("md5")
+                    .size(16)
+                    .unwrap();
+
+                let pretty = concat!(
+                    "{",
+                    "\"name\":\"md5\",",
+                    "\"size\":16,",
+                    "\"type\":\"fixed\"",
+                    "}"
+                );
+
+                let f2 = schema::from_str(pretty).unwrap();
+
+                assert_eq!(f, f2);
+            }
         }
 
         mod builder {
