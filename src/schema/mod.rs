@@ -14,7 +14,12 @@
 
 // Re-export the Schema model in a more friendly namesapce.
 pub use self::model::*;
-pub use self::ser::{to_string};
+pub use self::ser::{
+	to_string
+};
+pub use self::de::{
+	from_str
+};
 pub use self::builder::{
 	ArrayBuilder,
 	EnumBuilder,
@@ -27,7 +32,8 @@ pub use self::builder::{
 	UnionBuilder
 };
 
-pub mod ser;
+pub mod de;
 pub mod error;
+pub mod ser;
 mod builder;
 mod model;

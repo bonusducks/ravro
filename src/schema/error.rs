@@ -15,12 +15,14 @@
 use std::error;
 use std::fmt;
 use std::io;
+use serde::json::{self};
 
 #[derive(Clone, PartialEq)]
 pub enum ErrorCode {
     Unknown,
     NotValidPrimitiveType,
     NotWellFormedName,
+    JsonErrorCode(json::ErrorCode)
 }
 
 impl fmt::Debug for ErrorCode {
@@ -31,6 +33,7 @@ impl fmt::Debug for ErrorCode {
             ErrorCode::Unknown                  => "Unexpected error".fmt(f),
             ErrorCode::NotValidPrimitiveType    => "Not a valid primitiva data type".fmt(f),
             ErrorCode::NotWellFormedName        => "Name is not valid/well formed".fmt(f),
+            ErrorCode::JsonErrorCode(ref ec)    => ec.fmt(f),
         }
     }
 }

@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use std::fmt;
+
 use regex::Regex;
 use serde::json::Value;
 use serde::json::builder::ObjectBuilder;
@@ -38,6 +40,12 @@ impl<'a> From<&'a FieldSortOrder> for String {
             FieldSortOrder::Descending => String::from("descending"),
             FieldSortOrder::Ignore     => String::from("ignore"),
         }
+    }
+}
+
+impl fmt::Display for FieldSortOrder {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", String::from(self))
     }
 }
 
@@ -268,11 +276,13 @@ impl Schema {
     }
 }
 
+/*
 impl ToString for Schema {
     fn to_string(&self) -> String {
         String::from(self)
     }
 }
+*/
 
 // When converting to string, keep it to JSON but the more compact style.
 // For example, "string" and {"type":"string"} are always equivalent types,
@@ -295,5 +305,11 @@ impl<'a> From<&'a Schema> for String {
                 format!("[{}]", string_vec.connect(","))
             }
         }
+    }
+}
+
+impl fmt::Display for Schema {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", String::from(self))
     }
 }

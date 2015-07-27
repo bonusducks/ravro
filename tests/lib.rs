@@ -108,7 +108,6 @@ mod primitive {
             assert_eq!(s, String::from(r#""null""#));
         }
 
-        
         #[test]
         fn boolean_type() {
             let b = Schema::String(String::from("boolean"));
@@ -118,7 +117,7 @@ mod primitive {
         }
 
         #[test]
-        fn int_type() {            
+        fn int_type() {
             let b = Schema::String(String::from("int"));
             let s = schema::to_string(&b).unwrap();
 
@@ -163,6 +162,75 @@ mod primitive {
             let s = schema::to_string(&b).unwrap();
 
             assert_eq!(s, String::from(r#""string""#));
+        }
+    }
+
+    mod de {
+        use ravro::schema::{self, Schema};
+
+        #[test]
+        fn null_type() {
+            // Note that the "null" primitive type isn't the same as Schema::Null
+            let s = Schema::String(String::from("null"));
+            let n = schema::from_str(r#""null""#).unwrap();
+
+            assert_eq!(s, n);
+        }
+
+        #[test]
+        fn boolean_type() {
+            let s = Schema::String(String::from("boolean"));
+            let b = schema::from_str(r#""boolean""#).unwrap();
+
+            assert_eq!(s, b);
+        }
+
+        #[test]
+        fn int_type() {
+            let s = Schema::String(String::from("int"));
+            let i = schema::from_str(r#""int""#).unwrap();
+
+            assert_eq!(s, i);
+        }
+
+        #[test]
+        fn long_type() {
+            let s = Schema::String(String::from("long"));
+            let l = schema::from_str(r#""long""#).unwrap();
+
+            assert_eq!(s, l);
+        }
+
+        #[test]
+        fn float_type() {
+            let s = Schema::String(String::from("float"));
+            let f = schema::from_str(r#""float""#).unwrap();
+
+            assert_eq!(s, f);
+        }
+
+        #[test]
+        fn double_type() {
+            let s = Schema::String(String::from("double"));
+            let d = schema::from_str(r#""double""#).unwrap();
+
+            assert_eq!(s, d);
+        }
+
+        #[test]
+        fn bytes_type() {
+            let s = Schema::String(String::from("bytes"));
+            let b = schema::from_str(r#""bytes""#).unwrap();
+
+            assert_eq!(s, b);
+        }
+
+        #[test]
+        fn string_type() {
+            let s = Schema::String(String::from("string"));
+            let st = schema::from_str(r#""string""#).unwrap();
+
+            assert_eq!(s, st);
         }
     }
 }
