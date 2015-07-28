@@ -19,6 +19,8 @@ use serde::json::Value;
 use serde::json::builder::ObjectBuilder;
 use serde::json::ser::to_string;
 
+use super::error::*;
+
 #[derive(Clone, PartialEq, Debug)]
 pub enum Schema {
     Null,
@@ -178,20 +180,24 @@ impl Schema {
         match *self {
             Schema::Object(ref value) => {
                 let fname = self.object_fullname(value);
-                let segment_re = Regex::new(r#"^[A-Za-z_][A-Za-z0-9_]*$"#).unwrap();
-
-                // yeah, I could have done this as for loop and bailed early
-                let valid_fname = fname.split('.').fold(true, |valid, segment|
-                    valid && segment_re.is_match(&segment)
-                );
-
-                if valid_fname {
-                    Ok(fname)
-                } else {
-                    Err("Name is not well formed")
-                }
+                Ok(try!(self.check_name_segments(fname)))
             },
             _ => Err("Not a valid Schema type")
+        }
+    }
+
+    fn check_name_segments(&self, name: String) -> Result<String, &'static str> {
+        let segment_re = Regex::new(r#"^[A-Za-z_][A-Za-z0-9_]*$"#).unwrap();
+
+        // yeah, I could have done this as for loop and bailed early
+        let valid_name = name.split('.').fold(true, |valid, segment|
+            valid && segment_re.is_match(&segment)
+        );
+
+        if valid_name {
+            Ok(name)
+        } else {
+            Err("Name is not well formed")
         }
     }
 
@@ -274,15 +280,45 @@ impl Schema {
             _ => None
         }
     }
-}
 
-/*
-impl ToString for Schema {
-    fn to_string(&self) -> String {
-        String::from(self)
+    pub fn is_valid(&self) -> Result<(),Error> {
+        // get the schmea in it's most general form,
+        // determine it's type, and then perform the appropriate
+        // validation. If it's a union, do this for each element 
+        // of the union.
+
+        match *self {
+            Schema::String(ref s) => Ok(try!(self.is_valid_schema_string(s))),
+            Schema::Union(ref vec) => Ok(try!(self.is_valid_schema_union(vec))),
+            Schema::Object(ref obj) => Ok(try!(self.is_valid_schema_object(obj))),
+            _ => Err(Error::SyntaxError(ErrorCode::Unknown, 0, 0)) // catch all punt
+        }
+    }
+
+    fn is_valid_schema_string(&self, s: &String) -> Result<(),Error> {
+        // There are two cases here. One is that the string is a primitive type name.
+        // The other is that the string refers to a previously defined schema name.
+        // So it has to satify the same requirements as the the fullname name segments.
+        if self.is_primitive() {
+            Ok(())
+        } else {
+            let result = self.check_name_segments(s.clone());
+            if result.is_ok() {
+                Ok(())
+            } else {
+                Err(Error::SyntaxError(ErrorCode::NotWellFormedName, 0, 0))
+            }
+        }
+    }
+
+    fn is_valid_schema_union(&self, vec: &Vec<Schema>) -> Result<(),Error> {
+        Err(Error::SyntaxError(ErrorCode::Unknown, 0, 0)) // catch all punt
+    }
+
+    fn is_valid_schema_object(&self, obj: &Value) -> Result<(),Error> {
+        Err(Error::SyntaxError(ErrorCode::Unknown, 0, 0)) // catch all punt
     }
 }
-*/
 
 // When converting to string, keep it to JSON but the more compact style.
 // For example, "string" and {"type":"string"} are always equivalent types,

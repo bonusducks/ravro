@@ -233,6 +233,28 @@ mod primitive {
             assert_eq!(s, st);
         }
     }
+
+    mod is_valid {
+        use ravro::schema::Schema;
+
+        #[test]
+        fn null_type() {
+            let s = Schema::String(String::from("null"));
+            assert!(s.is_valid().is_ok());
+        }
+
+        #[test]
+        fn good_name() {
+            let s = Schema::String(String::from("foobar"));
+            assert!(s.is_valid().is_ok());
+        }
+
+        #[test]
+        fn bad_name() {
+            let s = Schema::String(String::from(";;foobar;;"));
+            assert!(s.is_valid().is_err());
+        }
+    }
 }
 
 mod union {
