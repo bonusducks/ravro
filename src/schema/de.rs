@@ -14,14 +14,41 @@
 
 use super::model::Schema;
 use super::error::*;
-use serde::json::{self};
+use serde::json::{self, Value};
 
 pub fn from_str(s: &str) -> Result<Schema, Error> {
     let s = s.trim();
     if s.starts_with("[") || s.starts_with("{") {
         let value = json::from_str(s);
         if value.is_ok() {
-            Ok(Schema::Object(value.unwrap()))
+            if s.starts_with("{") {
+                Ok(Schema::Object(value.unwrap()))
+            } else {
+                // Need to do more work to convert this into a Union
+                if let Some(Value::Array(value_array)) = value.ok() {
+                    let mut schema_vec = Vec::new();
+                    for val in value_array.into_iter() {
+                        match val {
+                            Value::String(s) => {
+                                schema_vec.push(Schema::String(s));
+                            },
+                            Value::Array(_) => {
+                                return Err(Error::SyntaxError(ErrorCode::CannotNestArrays, 0, 0));
+                            },
+                            _ => {
+                                schema_vec.push(Schema::Object(val));
+                            }
+                        }
+                    }
+                    Ok(Schema::Union(schema_vec))
+                } else {
+                    // ... really shouldn't get here. The ok() will always give us the Some(..),
+                    // but there is a remote possibility that the type is somehow not a Value::Array.
+                    // Remote. OK, negligable if we've gotten valid JSON, and the error branch below
+                    // should be handling the bad JSON case.
+                    Err(Error::SyntaxError(ErrorCode::Unknown, 0, 0))
+                }
+            }
         } else {
             // Translate the serde::json Error to our Error
             let err = value.unwrap_err();

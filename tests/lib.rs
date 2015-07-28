@@ -294,6 +294,96 @@ mod union {
         }
     }
 
+    mod de {
+        use ravro::schema::{self, Schema, UnionBuilder};
+
+        #[test]
+        fn union_1() {
+            let u = UnionBuilder::new()
+                        .push_record(|bld|
+                            bld
+                                .name("foo")
+                                .namespace("x.y")
+                                .doc("bar baz")
+                                .fields(|fab|
+                                    fab.push(|fb| fb.name("f1").field_type(Schema::String(String::from("int"))) )
+                                       .push(|fb| fb.name("f2").field_type(Schema::String(String::from("boolean"))) )
+                                )
+                        )
+                        .unwrap();
+
+            let pretty = concat!(
+                "[{",
+                "\"doc\":\"bar baz\",",
+                "\"fields\":[",
+                "{\"name\":\"f1\",\"type\":{\"type\":\"int\"}},",
+                "{\"name\":\"f2\",\"type\":{\"type\":\"boolean\"}}],",
+                "\"name\":\"foo\",",
+                "\"namespace\":\"x.y\",",
+                "\"type\":\"record\"",
+                "}]"
+            );
+
+            let u2 = schema::from_str(pretty).unwrap();
+
+            assert_eq!(u, u2);
+        }
+
+        #[test]
+        fn union_2() {
+            let u = UnionBuilder::new()
+                        .push_schema(Schema::String(String::from("int")))
+                        .push_schema(Schema::String(String::from("boolean")))
+                        .unwrap();
+
+            // Converting to the simplified string type representation works only
+            // at the "top level" currently.
+            let pretty = "[\"int\",\"boolean\"]";
+
+            let u2 = schema::from_str(pretty).unwrap();
+
+            assert_eq!(u, u2);
+        }
+
+        #[test]
+        fn union_3() {
+            let u = UnionBuilder::new()
+                        .push_map(|bld|
+                            bld.values(Schema::String(String::from("string")))
+                        )
+                        .unwrap();
+
+            let pretty = concat!(
+                "[{",
+                "\"type\":\"map\",",
+                "\"values\":{\"type\":\"string\"}",
+                "}]"
+            );
+
+            let u2 = schema::from_str(pretty).unwrap();
+
+            assert_eq!(u, u2);
+        }
+
+        #[test]
+        fn cannot_nest_arrays() {
+            // So this is valid JSON, but according to the schema spec, unions are not allowed to
+            // nest.
+            let pretty = concat!(
+                "[{",
+                "\"type\":\"map\",",
+                "\"values\":{\"type\":\"string\"}",
+                "},",
+                "[\"int\",\"boolean\"],",
+                "]"
+            );
+
+            let u = schema::from_str(pretty);
+
+            assert!(u.is_err());
+        }
+    }
+
     mod builder {
         use ravro::schema::{Schema, UnionBuilder};
         //use serde::json::Value;

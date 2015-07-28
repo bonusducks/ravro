@@ -22,6 +22,7 @@ pub enum ErrorCode {
     Unknown,
     NotValidPrimitiveType,
     NotWellFormedName,
+    CannotNestArrays,
     JsonErrorCode(json::ErrorCode)
 }
 
@@ -33,6 +34,7 @@ impl fmt::Debug for ErrorCode {
             ErrorCode::Unknown                  => "Unexpected error".fmt(f),
             ErrorCode::NotValidPrimitiveType    => "Not a valid primitiva data type".fmt(f),
             ErrorCode::NotWellFormedName        => "Name is not valid/well formed".fmt(f),
+            ErrorCode::CannotNestArrays         => "Arrays cannot be nested".fmt(f),
             ErrorCode::JsonErrorCode(ref ec)    => ec.fmt(f),
         }
     }
