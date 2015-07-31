@@ -31,11 +31,33 @@ impl FieldBuilder {
     }
 
     pub fn field_type(mut self, field_type: Schema) -> FieldBuilder {
-        // Normally blindly unwrapping after the as_object call would be particularlly 
-        // unwise, but all code paths return Some(..) value at the moment.
-        if let Some(Schema::Object(Value::Object(btree))) = field_type.as_object() {
-            self.field.insert(String::from("type"), Value::Object(btree));
+        let val : Value;
+
+        match field_type {
+            Schema::String(s) => {
+                val = Value::String(s);
+            },
+            Schema::Object(v) => {
+                val = v;
+            },
+            Schema::Union(schema_vec) => {
+                let mut value_vec = Vec::new();
+                for schema in schema_vec.into_iter() {
+                    // I really need to implement From(Schema) -> Value
+                    match schema {
+                        Schema::String(s) => { value_vec.push(Value::String(s)); },
+                        Schema::Object(v) => { value_vec.push(v); },
+                        Schema::Null      => { value_vec.push(Value::Null); },
+                        Schema::Union(_)  => { panic!("Cannot have nested unions in Avro schemas"); },
+                    }
+                }
+                val = Value::Array(value_vec);
+            },
+            Schema::Null => {
+                val = Value::String(String::from("null"));
+            },
         }
+        self.field.insert(String::from("type"), val);
         self
     }
 

@@ -55,11 +55,15 @@ impl Schema {
     pub fn is_primitive(&self) -> bool {
         match *self {
             Schema::String(ref s) => {
-                match s.as_ref() {
-                    "null" | "boolean" | "int" | "long" | "float" | "double" | "bytes" | "string" => true,
-                    _ => false,
-                }
+                self.is_primitive_type_name(s)
             },
+            _ => false,
+        }
+    }
+
+    fn is_primitive_type_name(&self, name: &str) -> bool {
+        match name {
+            "null" | "boolean" | "int" | "long" | "float" | "double" | "bytes" | "string" => true,
             _ => false,
         }
     }
@@ -156,7 +160,7 @@ impl Schema {
                 let fname = try!(self.valid_fullname());
                 Ok(fname)
             }
-            _ => Err("This schmea type doesn't support a fullname")
+            _ => Err("This schema type doesn't support a fullname")
         }
     }
 
@@ -290,7 +294,7 @@ impl Schema {
         match *self {
             Schema::String(ref s) => Ok(try!(self.is_valid_schema_string(s))),
             Schema::Union(ref vec) => Ok(try!(self.is_valid_schema_union(vec))),
-            Schema::Object(ref obj) => Ok(try!(self.is_valid_schema_object(obj))),
+            Schema::Object(ref json_val) => Ok(try!(self.is_valid_schema_object(json_val))),
             _ => Err(Error::SyntaxError(ErrorCode::Unknown, 0, 0)) // catch all punt
         }
     }
@@ -315,8 +319,175 @@ impl Schema {
         Err(Error::SyntaxError(ErrorCode::Unknown, 0, 0)) // catch all punt
     }
 
-    fn is_valid_schema_object(&self, obj: &Value) -> Result<(),Error> {
-        Err(Error::SyntaxError(ErrorCode::Unknown, 0, 0)) // catch all punt
+    fn is_valid_schema_object(&self, json_val: &Value) -> Result<(),Error> {
+        if let Some(&Value::String(ref type_name)) = json_val.find("type") {
+            match type_name.as_ref() {
+                "record" => Ok(try!(self.is_valid_schema_record(json_val))),
+                _ => Err(Error::SyntaxError(ErrorCode::NotValidComplexType, 0, 0))
+            }
+        } else {
+            Err(Error::SyntaxError(ErrorCode::ExpectedTypeAttribute, 0, 0))
+        }
+    }
+
+    fn is_valid_schema_record(&self, json_val: &Value) -> Result<(),Error> {
+        let fn_result = self.fullname();
+        if fn_result.is_err() {
+            return Err(Error::SyntaxError(ErrorCode::NotWellFormedName, 0, 0));
+        }
+
+        if let Some(&Value::Array(ref value_vec)) = json_val.find("fields") {
+            let mut record_ns = None;
+            if let Some(&Value::String(ref ns)) = json_val.find("namespace") {
+                record_ns = Some(ns);
+            }
+
+            Ok(try!(self.is_valid_schema_fields(value_vec, &record_ns)))
+        } else {
+            Err(Error::SyntaxError(ErrorCode::ExpectedFieldDefintion, 0, 0))
+        }
+    }
+
+    fn is_valid_schema_fields(&self, value_vec: &Vec<Value>, record_ns: &Option<&String>) -> Result<(),Error> {
+        for field_value in value_vec.iter() {
+            try!(self.is_valid_schema_field(&field_value, record_ns));
+        }
+        Ok(())
+    }
+
+    fn is_valid_field_type(&self, field_type: &Value) -> Result<(),Error> {
+        match *field_type {
+            Value::String(ref s) => {
+                Ok(try!(Schema::String(s.clone()).is_valid()))
+            },
+            Value::Array(ref value_vec) => {
+                for value in value_vec.iter() {
+                    try!(self.is_valid_field_type(&value));
+                }
+                Ok(())
+            },
+            Value::Object(_) => {
+                Ok(try!(Schema::Object(field_type.clone()).is_valid()))
+            },
+            _ => {
+                return Err(Error::SyntaxError(ErrorCode::UnknownFieldType, 0, 0));
+            },
+        }
+    }
+
+    fn is_valid_schema_field(&self, field_value: &Value, record_ns: &Option<&String>) -> Result<(),Error> {
+        try!(self.is_valid_field_name(field_value, record_ns));
+
+        // Name was the easy one. Now we need to check the type.
+        let field_type: &Value;
+        if let Some(ref ft) = field_value.find("type") {
+            field_type = ft;
+        } else {
+            return Err(Error::SyntaxError(ErrorCode::ExpectedFieldTypeAttribute, 0, 0));
+        }
+        self.is_valid_field_type(field_type);
+
+        // OK, that wasn't so bad actually. For defaults, we need to match the JSON type
+        // to the Avro type.
+        // TODO: this is just checking type matching, it's not cheching range for number
+        //       values. For bytes, ... it's not clear what the requirement is.
+        if let Some(default_value) = field_value.find("default") {
+            let mut default_type_matches_field_type = false;
+            match *field_type {
+                Value::String(ref s) => {
+                    // Should be a primitive type or a previously defined type.
+                    if self.is_primitive_type_name(s) {
+                        match s.as_ref() {
+                            "string" => {
+                                if let &Value::String(_) = default_value {
+                                    default_type_matches_field_type = true;
+                                }
+                            },
+                            "int" | "long" => {
+                                match *default_value {
+                                    Value::I64(_) | Value::U64(_) => {
+                                        default_type_matches_field_type = true;
+                                    }
+                                    _ => {}
+                                }
+                            },
+                            "null" => {
+                                if let &Value::Null = default_value {
+                                    default_type_matches_field_type = true;
+                                }
+                            },
+                            "boolean" => {
+                                if let &Value::Bool(_) = default_value {
+                                    default_type_matches_field_type = true;
+                                }
+                            },
+                            "float" | "double" => {
+                                if let &Value::F64(_) = default_value {
+                                    default_type_matches_field_type = true;
+                                }
+                            },
+                            "bytes" => {
+                                if let &Value::String(_) = default_value {
+                                    default_type_matches_field_type = true;
+                                }
+                            },
+                            _ => {
+                                panic!("Can't get here, as is_primitive_type_name() limits the possible values of s");
+                            }
+                        }
+                    } else {
+                        // at this point, since I'm not currently caching previously
+                        // defined types, assume it's the name of a Schema::Object.
+                        panic!(format!("Field type is non-primitive type {}", s));
+                    }
+                },
+                Value::Object(_) => {
+                },
+                _ => {
+
+                },
+            }
+
+            if !default_type_matches_field_type {
+                return Err(Error::SyntaxError(ErrorCode::FieldDefaultTypeMismatch, 0, 0));
+            }
+        }
+
+        Ok(())
+    }
+
+    fn is_valid_field_name(&self, field_value: &Value, record_ns: &Option<&String>) -> Result<(),Error> {
+        // Has to satisfy the same name requirements as a record name, if the field 
+        // does not have a namespace in the name but record does, then the field 
+        // uses the record namespace to construct the field fullname.
+
+        // TODO : refactor so field and record fullname creation and verification are the same.
+        let fullname: String;
+        let ref name: String;
+        let mut ns: &String = &String::from("");
+
+        if let Some(&Value::String(ref name_value)) = field_value.find("name") {
+            name = name_value;
+        } else {
+            return Err(Error::SyntaxError(ErrorCode::FieldNameNotWellFormed, 0, 0));
+        }
+
+        if let &Some(ref parent_ns) = record_ns {
+            ns = parent_ns;
+        }
+
+        if name.contains(".") || ns.eq("") {
+            fullname = name.clone();
+        } else {
+            fullname = format!("{}.{}", ns, name);
+        }
+
+        let check_result = self.check_name_segments(fullname);
+        if check_result.is_err() {
+            return Err(Error::SyntaxError(ErrorCode::FieldNameNotWellFormed, 0, 0));
+        }
+
+        Ok(())
     }
 }
 

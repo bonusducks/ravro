@@ -21,7 +21,14 @@ use serde::json::{self};
 pub enum ErrorCode {
     Unknown,
     NotValidPrimitiveType,
+    NotValidComplexType,
+    ExpectedTypeAttribute,
+    ExpectedFieldDefintion,
+    ExpectedFieldTypeAttribute,
+    FieldDefaultTypeMismatch,
+    UnknownFieldType,
     NotWellFormedName,
+    FieldNameNotWellFormed,
     CannotNestArrays,
     JsonErrorCode(json::ErrorCode)
 }
@@ -31,10 +38,17 @@ impl fmt::Debug for ErrorCode {
         use std::fmt::Debug;
 
         match *self {
-            ErrorCode::Unknown                  => "Unexpected error".fmt(f),
-            ErrorCode::NotValidPrimitiveType    => "Not a valid primitiva data type".fmt(f),
-            ErrorCode::NotWellFormedName        => "Name is not valid/well formed".fmt(f),
-            ErrorCode::CannotNestArrays         => "Arrays cannot be nested".fmt(f),
+            ErrorCode::Unknown                  => "unexpected error".fmt(f),
+            ErrorCode::NotValidPrimitiveType    => "not a valid primitiva data type".fmt(f),
+            ErrorCode::NotValidComplexType      => "not a valid complex data type".fmt(f),
+            ErrorCode::ExpectedTypeAttribute    => "expected type attribute for complex type".fmt(f),
+            ErrorCode::ExpectedFieldDefintion   => "expected one or more record field definitions".fmt(f),
+            ErrorCode::ExpectedFieldTypeAttribute    => "expected type attribute for field".fmt(f),
+            ErrorCode::FieldDefaultTypeMismatch => "field default type does not match field type".fmt(f),
+            ErrorCode::UnknownFieldType         => "field type is unexpected/unknown".fmt(f),
+            ErrorCode::NotWellFormedName        => "name is not valid/well formed".fmt(f),
+            ErrorCode::FieldNameNotWellFormed   => "field name is not valid/well formed".fmt(f),
+            ErrorCode::CannotNestArrays         => "arrays cannot be nested".fmt(f),
             ErrorCode::JsonErrorCode(ref ec)    => ec.fmt(f),
         }
     }

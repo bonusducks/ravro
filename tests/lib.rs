@@ -338,8 +338,8 @@ mod union {
                 "[{",
                 "\"doc\":\"bar baz\",",
                 "\"fields\":[",
-                "{\"name\":\"f1\",\"type\":{\"type\":\"int\"}},",
-                "{\"name\":\"f2\",\"type\":{\"type\":\"boolean\"}}],",
+                "{\"name\":\"f1\",\"type\":\"int\"},",
+                "{\"name\":\"f2\",\"type\":\"boolean\"}],",
                 "\"name\":\"foo\",",
                 "\"namespace\":\"x.y\",",
                 "\"type\":\"record\"",
@@ -529,8 +529,8 @@ mod union {
                 "[{",
                 "\"doc\":\"bar baz\",",
                 "\"fields\":[",
-                "{\"name\":\"f1\",\"type\":{\"type\":\"int\"}},",
-                "{\"name\":\"f2\",\"type\":{\"type\":\"boolean\"}}],",
+                "{\"name\":\"f1\",\"type\":\"int\"},",
+                "{\"name\":\"f2\",\"type\":\"boolean\"}],",
                 "\"name\":\"foo\",",
                 "\"namespace\":\"x.y\",",
                 "\"type\":\"record\"",
@@ -894,8 +894,8 @@ mod object {
                 let pretty = concat!(
                     "{",
                     "\"fields\":[",
-                    "{\"name\":\"bar\",\"type\":{\"type\":\"boolean\"}},",
-                    "{\"doc\":\"yadda yadda\",\"name\":\"baz\",\"type\":{\"type\":\"int\"}}",
+                    "{\"name\":\"bar\",\"type\":\"boolean\"},",
+                    "{\"doc\":\"yadda yadda\",\"name\":\"baz\",\"type\":\"int\"}",
                     "],",
                     "\"name\":\"foo\",",
                     "\"type\":\"record\"",
@@ -926,7 +926,7 @@ mod object {
                 // alphabetical order, which is not the Avro cannonical order.
                 let pretty = concat!(
                     "{",
-                    "\"fields\":[{\"aliases\":[\"bar\",\"baz\"],\"name\":\"bar\",\"type\":{\"type\":\"string\"}}],",
+                    "\"fields\":[{\"aliases\":[\"bar\",\"baz\"],\"name\":\"bar\",\"type\":\"string\"}],",
                     "\"name\":\"foo\",",
                     "\"type\":\"record\"",
                     "}"
@@ -1009,7 +1009,7 @@ mod object {
                 // alphabetical order, which is not the Avro cannonical order.
                 let pretty = concat!(
                     "{",
-                    "\"fields\":[{\"name\":\"bar\",\"type\":{\"type\":\"boolean\"}}],",
+                    "\"fields\":[{\"name\":\"bar\",\"type\":\"boolean\"}],",
                     "\"name\":\"foo\",",
                     "\"type\":\"record\"",
                     "}"
@@ -1042,8 +1042,8 @@ mod object {
                 let pretty = concat!(
                     "{",
                     "\"fields\":[",
-                    "{\"name\":\"bar\",\"type\":{\"type\":\"boolean\"}},",
-                    "{\"doc\":\"yadda yadda\",\"name\":\"baz\",\"type\":{\"type\":\"int\"}}",
+                    "{\"name\":\"bar\",\"type\":\"boolean\"},",
+                    "{\"doc\":\"yadda yadda\",\"name\":\"baz\",\"type\":\"int\"}",
                     "],",
                     "\"name\":\"foo\",",
                     "\"type\":\"record\"",
@@ -1071,7 +1071,7 @@ mod object {
                 // alphabetical order, which is not the Avro cannonical order.
                 let pretty = concat!(
                     "{",
-                    "\"fields\":[{\"name\":\"bar\",\"order\":\"ascending\",\"type\":{\"type\":\"string\"}}],",
+                    "\"fields\":[{\"name\":\"bar\",\"order\":\"ascending\",\"type\":\"string\"}],",
                     "\"name\":\"foo\",",
                     "\"type\":\"record\"",
                     "}"
@@ -1100,7 +1100,7 @@ mod object {
                 // alphabetical order, which is not the Avro cannonical order.
                 let pretty = concat!(
                     "{",
-                    "\"fields\":[{\"aliases\":[\"bar\",\"baz\"],\"name\":\"bar\",\"type\":{\"type\":\"string\"}}],",
+                    "\"fields\":[{\"aliases\":[\"bar\",\"baz\"],\"name\":\"bar\",\"type\":\"string\"}],",
                     "\"name\":\"foo\",",
                     "\"type\":\"record\"",
                     "}"
@@ -1127,13 +1127,412 @@ mod object {
                 // alphabetical order, which is not the Avro cannonical order.
                 let pretty = concat!(
                     "{",
-                    "\"fields\":[{\"default\":\"one two three\",\"name\":\"bar\",\"type\":{\"type\":\"string\"}}],",
+                    "\"fields\":[{\"default\":\"one two three\",\"name\":\"bar\",\"type\":\"string\"}],",
                     "\"name\":\"foo\",",
                     "\"type\":\"record\"",
                     "}"
                 );
 
                 assert_eq!(s, pretty);
+            }
+        }
+
+        mod is_valid {
+            use ravro::schema::{RecordBuilder, Schema};
+            use ravro::schema::error::{Error, ErrorCode};
+            use serde::json::Value;
+
+            #[test]
+            fn missing_name() {
+                let r = RecordBuilder::new()
+                    .unwrap();
+
+                let valid = r.is_valid();
+                assert!(valid.is_err());
+
+                if let Some(Error::SyntaxError(code, _, _)) = valid.err() {
+                    assert_eq!(code, ErrorCode::NotWellFormedName);
+                } else {
+                    assert!(false);
+                }
+            }
+
+            #[test]
+            fn missing_fields() {
+                let r = RecordBuilder::new()
+                    .name("foo")
+                    .unwrap();
+
+                let valid = r.is_valid();
+                assert!(valid.is_err());
+
+                if let Some(Error::SyntaxError(code, _, _)) = valid.err() {
+                    assert_eq!(code, ErrorCode::ExpectedFieldDefintion);
+                } else {
+                    assert!(false);
+                }
+            }
+
+            #[test]
+            fn empty_field_array_ok() {
+                let r = RecordBuilder::new()
+                    .name("foo")
+                    .fields(|fab| fab ) // has effect of creating empty fields array, which is OK according to the spc.
+                    .unwrap();
+
+                let valid = r.is_valid();
+                assert!(valid.is_ok());
+            }
+
+            #[test]
+            fn field_missing_name() {
+                let r = RecordBuilder::new()
+                    .name("foo")
+                    .fields(|fab| 
+                        fab.push(|fb| fb.field_type(Schema::String(String::from("string"))) ) 
+                    ) 
+                    .unwrap();
+
+                let valid = r.is_valid();
+                assert!(valid.is_err());
+
+                if let Some(Error::SyntaxError(code, _, _)) = valid.err() {
+                    assert_eq!(code, ErrorCode::FieldNameNotWellFormed);
+                } else {
+                    assert!(false);
+                }
+            }
+
+            #[test]
+            fn field_has_bad_name() {
+                let r = RecordBuilder::new()
+                    .name("foo")
+                    .fields(|fab| 
+                        fab.push(|fb| fb.name(";;foo;;") ) 
+                    ) 
+                    .unwrap();
+
+                let valid = r.is_valid();
+                assert!(valid.is_err());
+
+                if let Some(Error::SyntaxError(code, _, _)) = valid.err() {
+                    assert_eq!(code, ErrorCode::FieldNameNotWellFormed);
+                } else {
+                    assert!(false);
+                }
+            }
+
+            #[test]
+            fn field_missing_type() {
+                let r = RecordBuilder::new()
+                    .name("foo")
+                    .fields(|fab| 
+                        fab.push(|fb| fb.name("bar") ) 
+                    ) 
+                    .unwrap();
+
+                let valid = r.is_valid();
+                assert!(valid.is_err());
+
+                if let Some(Error::SyntaxError(code, _, _)) = valid.err() {
+                    assert_eq!(code, ErrorCode::ExpectedFieldTypeAttribute);
+                } else {
+                    assert!(false);
+                }
+            }
+
+            #[test]
+            fn bad_default_for_string_field() {
+                let r = RecordBuilder::new()
+                    .name("foo")
+                    .fields(|fab|
+                        fab.push(|fb|
+                            fb
+                                .name("bar")
+                                .field_type(Schema::String(String::from("string")))
+                                .default(Value::U64(99))
+                        )
+                    )
+                    .unwrap();
+
+                let valid = r.is_valid();
+                assert!(valid.is_err());
+
+                if let Some(Error::SyntaxError(code, _, _)) = valid.err() {
+                    assert_eq!(code, ErrorCode::FieldDefaultTypeMismatch);
+                } else {
+                    assert!(false);
+                }
+            }
+
+            #[test]
+            fn ok_default_for_string_field() {
+                let r = RecordBuilder::new()
+                    .name("foo")
+                    .fields(|fab|
+                        fab.push(|fb|
+                            fb
+                                .name("bar")
+                                .field_type(Schema::String(String::from("string")))
+                                .default(Value::String(String::from("yadda")))
+                        )
+                    )
+                    .unwrap();
+
+                let valid = r.is_valid();
+                assert!(valid.is_ok());
+            }
+
+            #[test]
+            fn bad_default_for_int_field() {
+                let r = RecordBuilder::new()
+                    .name("foo")
+                    .fields(|fab|
+                        fab.push(|fb|
+                            fb
+                                .name("bar")
+                                .field_type(Schema::String(String::from("int")))
+                                .default(Value::String(String::from("yadda")))
+                        )
+                    )
+                    .unwrap();
+
+                let valid = r.is_valid();
+                assert!(valid.is_err());
+
+                if let Some(Error::SyntaxError(code, _, _)) = valid.err() {
+                    assert_eq!(code, ErrorCode::FieldDefaultTypeMismatch);
+                } else {
+                    assert!(false);
+                }
+            }
+
+            #[test]
+            fn ok_default_for_int_field() {
+                let r = RecordBuilder::new()
+                    .name("foo")
+                    .fields(|fab|
+                        fab.push(|fb|
+                            fb
+                                .name("bar")
+                                .field_type(Schema::String(String::from("int")))
+                                .default(Value::I64(10i64))
+                        )
+                    )
+                    .unwrap();
+
+                let valid = r.is_valid();
+                assert!(valid.is_ok());
+            }
+
+            #[test]
+            fn bad_default_for_null_field() {
+                let r = RecordBuilder::new()
+                    .name("foo")
+                    .fields(|fab|
+                        fab.push(|fb|
+                            fb
+                                .name("bar")
+                                .field_type(Schema::String(String::from("null")))
+                                .default(Value::String(String::from("yadda")))
+                        )
+                    )
+                    .unwrap();
+
+                let valid = r.is_valid();
+                assert!(valid.is_err());
+
+                if let Some(Error::SyntaxError(code, _, _)) = valid.err() {
+                    assert_eq!(code, ErrorCode::FieldDefaultTypeMismatch);
+                } else {
+                    assert!(false);
+                }
+            }
+
+            #[test]
+            fn ok_default_for_null_field() {
+                let r = RecordBuilder::new()
+                    .name("foo")
+                    .fields(|fab|
+                        fab.push(|fb|
+                            fb
+                                .name("bar")
+                                .field_type(Schema::String(String::from("null")))
+                                .default(Value::Null)
+                        )
+                    )
+                    .unwrap();
+
+                let valid = r.is_valid();
+                assert!(valid.is_ok());
+            }
+
+            #[test]
+            fn bad_default_for_boolean_field() {
+                let r = RecordBuilder::new()
+                    .name("foo")
+                    .fields(|fab|
+                        fab.push(|fb|
+                            fb
+                                .name("bar")
+                                .field_type(Schema::String(String::from("boolean")))
+                                .default(Value::String(String::from("yadda")))
+                        )
+                    )
+                    .unwrap();
+
+                let valid = r.is_valid();
+                assert!(valid.is_err());
+
+                if let Some(Error::SyntaxError(code, _, _)) = valid.err() {
+                    assert_eq!(code, ErrorCode::FieldDefaultTypeMismatch);
+                } else {
+                    assert!(false);
+                }
+            }
+
+            #[test]
+            fn ok_default_for_boolean_field() {
+                let r = RecordBuilder::new()
+                    .name("foo")
+                    .fields(|fab|
+                        fab.push(|fb|
+                            fb
+                                .name("bar")
+                                .field_type(Schema::String(String::from("boolean")))
+                                .default(Value::Bool(true))
+                        )
+                    )
+                    .unwrap();
+
+                let valid = r.is_valid();
+                assert!(valid.is_ok());
+            }
+
+            #[test]
+            fn bad_default_for_long_field() {
+                let r = RecordBuilder::new()
+                    .name("foo")
+                    .fields(|fab|
+                        fab.push(|fb|
+                            fb
+                                .name("bar")
+                                .field_type(Schema::String(String::from("long")))
+                                .default(Value::String(String::from("yadda")))
+                        )
+                    )
+                    .unwrap();
+
+                let valid = r.is_valid();
+                assert!(valid.is_err());
+
+                if let Some(Error::SyntaxError(code, _, _)) = valid.err() {
+                    assert_eq!(code, ErrorCode::FieldDefaultTypeMismatch);
+                } else {
+                    assert!(false);
+                }
+            }
+
+            #[test]
+            fn ok_default_for_long_field() {
+                let r = RecordBuilder::new()
+                    .name("foo")
+                    .fields(|fab|
+                        fab.push(|fb|
+                            fb
+                                .name("bar")
+                                .field_type(Schema::String(String::from("long")))
+                                .default(Value::U64(1_000_000_000))
+                        )
+                    )
+                    .unwrap();
+
+                let valid = r.is_valid();
+                assert!(valid.is_ok());
+            }
+
+            #[test]
+            fn bad_default_for_float_field() {
+                let r = RecordBuilder::new()
+                    .name("foo")
+                    .fields(|fab|
+                        fab.push(|fb|
+                            fb
+                                .name("bar")
+                                .field_type(Schema::String(String::from("float")))
+                                .default(Value::String(String::from("yadda")))
+                        )
+                    )
+                    .unwrap();
+
+                let valid = r.is_valid();
+                assert!(valid.is_err());
+
+                if let Some(Error::SyntaxError(code, _, _)) = valid.err() {
+                    assert_eq!(code, ErrorCode::FieldDefaultTypeMismatch);
+                } else {
+                    assert!(false);
+                }
+            }
+
+            #[test]
+            fn ok_default_for_float_field() {
+                let r = RecordBuilder::new()
+                    .name("foo")
+                    .fields(|fab|
+                        fab.push(|fb|
+                            fb
+                                .name("bar")
+                                .field_type(Schema::String(String::from("float")))
+                                .default(Value::F64(1.1))
+                        )
+                    )
+                    .unwrap();
+
+                let valid = r.is_valid();
+                assert!(valid.is_ok());
+            }
+
+            #[test]
+            fn bad_default_for_bytes_field() {
+                let r = RecordBuilder::new()
+                    .name("foo")
+                    .fields(|fab|
+                        fab.push(|fb|
+                            fb
+                                .name("bar")
+                                .field_type(Schema::String(String::from("bytes")))
+                                .default(Value::F64(1.1))
+                        )
+                    )
+                    .unwrap();
+
+                let valid = r.is_valid();
+                assert!(valid.is_err());
+
+                if let Some(Error::SyntaxError(code, _, _)) = valid.err() {
+                    assert_eq!(code, ErrorCode::FieldDefaultTypeMismatch);
+                } else {
+                    assert!(false);
+                }
+            }
+
+            #[test]
+            fn ok_default_for_bytes_field() {
+                let r = RecordBuilder::new()
+                    .name("foo")
+                    .fields(|fab|
+                        fab.push(|fb|
+                            fb
+                                .name("bar")
+                                .field_type(Schema::String(String::from("bytes")))
+                                .default(Value::String(String::from("\\u00FF")))
+                        )
+                    )
+                    .unwrap();
+
+                let valid = r.is_valid();
+                assert!(valid.is_ok());
             }
         }
     }
