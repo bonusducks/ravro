@@ -1534,6 +1534,99 @@ mod object {
                 let valid = r.is_valid();
                 assert!(valid.is_ok());
             }
+
+            #[test]
+            fn bad_default_for_named_type_field() {
+                let r = RecordBuilder::new()
+                    .name("foo")
+                    .fields(|fab|
+                        fab.push(|fb|
+                            fb
+                                .name("bar")
+                                .field_type(Schema::String(String::from("LongList")))
+                                .default(Value::F64(1.1))
+                        )
+                    )
+                    .unwrap();
+
+                let valid = r.is_valid();
+                assert!(valid.is_err());
+
+                if let Some(Error::SyntaxError(code, _, _)) = valid.err() {
+                    assert_eq!(code, ErrorCode::FieldDefaultTypeMismatch);
+                } else {
+                    assert!(false);
+                }
+            }
+
+            #[test]
+            fn ok_default_for_named_type_field() {
+                let r = RecordBuilder::new()
+                    .name("foo")
+                    .fields(|fab|
+                        fab.push(|fb|
+                            fb
+                                .name("bar")
+                                // Realistically, this field type would be ["null", "LongList"],
+                                // and the actual default value would be "null" and "LongList"
+                                // would be the name of a record type.
+                                .field_type(Schema::String(String::from("LongList")))
+                                .default(Value::String(String::from("blah")))
+                        )
+                    )
+                    .unwrap();
+
+                // NOTE: This test is going to break once I implement verifything that the
+                //       type name actually exists.
+                let valid = r.is_valid();
+                assert!(valid.is_ok());
+            }
+
+            #[test]
+            fn bad_default_for_union_type_field() {
+                let v = vec![Schema::String(String::from("null")), Schema::String(String::from("string"))];
+                let u = Schema::Union(v);
+                let r = RecordBuilder::new()
+                    .name("foo")
+                    .fields(|fab|
+                        fab.push(|fb|
+                            fb
+                                .name("bar")
+                                .field_type(u)
+                                .default(Value::F64(1.1))
+                        )
+                    )
+                    .unwrap();
+
+                let valid = r.is_valid();
+                assert!(valid.is_err());
+
+                if let Some(Error::SyntaxError(code, _, _)) = valid.err() {
+                    assert_eq!(code, ErrorCode::FieldDefaultTypeMismatch);
+                } else {
+                    assert!(false);
+                }
+            }
+
+            #[test]
+            fn ok_default_for_union_type_field() {
+                let v = vec![Schema::String(String::from("null")), Schema::String(String::from("string"))];
+                let u = Schema::Union(v);
+                let r = RecordBuilder::new()
+                    .name("foo")
+                    .fields(|fab|
+                        fab.push(|fb|
+                            fb
+                                .name("bar")
+                                .field_type(u)
+                                .default(Value::Null)
+                        )
+                    )
+                    .unwrap();
+
+                let valid = r.is_valid();
+                assert!(valid.is_ok());
+            }
         }
     }
 

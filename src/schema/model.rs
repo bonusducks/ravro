@@ -375,6 +375,60 @@ impl Schema {
         }
     }
 
+    fn does_type_name_match_def_value(&self, type_name: &String, default_value: &Value) -> bool {
+        let mut default_type_matches_field_type = false;
+        if self.is_primitive_type_name(type_name) {
+            match type_name.as_ref() {
+                "string" => {
+                    if let &Value::String(_) = default_value {
+                        default_type_matches_field_type = true;
+                    }
+                },
+                "int" | "long" => {
+                    match *default_value {
+                        Value::I64(_) | Value::U64(_) => {
+                            default_type_matches_field_type = true;
+                        }
+                        _ => {}
+                    }
+                },
+                "null" => {
+                    if let &Value::Null = default_value {
+                        default_type_matches_field_type = true;
+                    }
+                },
+                "boolean" => {
+                    if let &Value::Bool(_) = default_value {
+                        default_type_matches_field_type = true;
+                    }
+                },
+                "float" | "double" => {
+                    if let &Value::F64(_) = default_value {
+                        default_type_matches_field_type = true;
+                    }
+                },
+                "bytes" => {
+                    if let &Value::String(_) = default_value {
+                        default_type_matches_field_type = true;
+                    }
+                },
+                _ => {
+                    panic!("Can't get here, as is_primitive_type_name() limits the possible values of s");
+                }
+            }
+        } else {
+            // at this point, since I'm not currently caching previously
+            // defined types, assume it's the name of a Schema::Object.
+
+            // TODO: Verify that this type name actually exists.
+            if let &Value::String(_) = default_value {
+                default_type_matches_field_type = true;
+            }
+        }
+
+        default_type_matches_field_type
+    }
+
     fn is_valid_schema_field(&self, field_value: &Value, record_ns: &Option<&String>) -> Result<(),Error> {
         try!(self.is_valid_field_name(field_value, record_ns));
 
@@ -385,7 +439,7 @@ impl Schema {
         } else {
             return Err(Error::SyntaxError(ErrorCode::ExpectedFieldTypeAttribute, 0, 0));
         }
-        self.is_valid_field_type(field_type);
+        try!(self.is_valid_field_type(field_type));
 
         // OK, that wasn't so bad actually. For defaults, we need to match the JSON type
         // to the Avro type.
@@ -396,56 +450,31 @@ impl Schema {
             match *field_type {
                 Value::String(ref s) => {
                     // Should be a primitive type or a previously defined type.
-                    if self.is_primitive_type_name(s) {
-                        match s.as_ref() {
-                            "string" => {
-                                if let &Value::String(_) = default_value {
-                                    default_type_matches_field_type = true;
-                                }
-                            },
-                            "int" | "long" => {
-                                match *default_value {
-                                    Value::I64(_) | Value::U64(_) => {
-                                        default_type_matches_field_type = true;
-                                    }
-                                    _ => {}
-                                }
-                            },
-                            "null" => {
-                                if let &Value::Null = default_value {
-                                    default_type_matches_field_type = true;
-                                }
-                            },
-                            "boolean" => {
-                                if let &Value::Bool(_) = default_value {
-                                    default_type_matches_field_type = true;
-                                }
-                            },
-                            "float" | "double" => {
-                                if let &Value::F64(_) = default_value {
-                                    default_type_matches_field_type = true;
-                                }
-                            },
-                            "bytes" => {
-                                if let &Value::String(_) = default_value {
-                                    default_type_matches_field_type = true;
-                                }
-                            },
-                            _ => {
-                                panic!("Can't get here, as is_primitive_type_name() limits the possible values of s");
-                            }
-                        }
-                    } else {
-                        // at this point, since I'm not currently caching previously
-                        // defined types, assume it's the name of a Schema::Object.
-                        panic!(format!("Field type is non-primitive type {}", s));
-                    }
+                    default_type_matches_field_type = self.does_type_name_match_def_value(s, default_value);
                 },
                 Value::Object(_) => {
+                    // TODO
                 },
-                _ => {
-
-                },
+                Value::Array(ref array_vec) => {
+                    // Only the first element of the vector is to be considered when determining the default type.
+                    if let Some(first_element) = array_vec.first() {
+                        // ... and, we have to do this dance again...
+                        match *first_element {
+                            Value::Array(_) => {
+                                return Err(Error::SyntaxError(ErrorCode::CannotNestArrays, 0, 0));
+                            },
+                            Value::Object(_) => {
+                                // TODO
+                            },
+                            Value::String(ref s) => {
+                                default_type_matches_field_type =
+                                    self.does_type_name_match_def_value(s, default_value);
+                            },
+                            _ => { return Err(Error::SyntaxError(ErrorCode::NotValidType, 0, 0)); }
+                        }
+                    }
+                }
+                _ => { return Err(Error::SyntaxError(ErrorCode::NotValidType, 0, 0)); },
             }
 
             if !default_type_matches_field_type {
