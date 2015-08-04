@@ -290,6 +290,7 @@ impl Schema {
         // determine it's type, and then perform the appropriate
         // validation. If it's a union, do this for each element 
         // of the union.
+        debug!("is_valid({:?})", self);
 
         match *self {
             Schema::String(ref s) => Ok(try!(self.is_valid_schema_string(s))),
@@ -320,13 +321,48 @@ impl Schema {
     }
 
     fn is_valid_schema_object(&self, json_val: &Value) -> Result<(),Error> {
+        debug!("is_valid_schema_object({:?})", json_val);
+
         if let Some(&Value::String(ref type_name)) = json_val.find("type") {
             match type_name.as_ref() {
                 "record" => Ok(try!(self.is_valid_schema_record(json_val))),
-                _ => Err(Error::SyntaxError(ErrorCode::NotValidComplexType, 0, 0))
+                "array" => Ok(try!(self.is_valid_array(json_val))),
+                _ => {
+                    // The object '{"type":"<primitive>"}' is a valid representation
+                    // of a primitive type, so try to account for that here.
+                    let type_result = self.is_valid_schema_string(type_name);
+                    if type_result.is_ok() {
+                        Ok(())
+                    } else {
+                        Err(Error::SyntaxError(ErrorCode::NotValidComplexType, 0, 0))
+                    }
+                }
             }
         } else {
             Err(Error::SyntaxError(ErrorCode::ExpectedTypeAttribute, 0, 0))
+        }
+    }
+
+    fn is_valid_array(&self, json_val: &Value) -> Result<(),Error> {
+        // All we can really do here is verify that there is an "items" attribute and
+        // that it's value is either a string representing a primitive or named
+        // schmea, or it's a full schmea object, which needs to be validated
+        // unto itself.
+        if let Some(items_value) = json_val.find("items") {
+            match *items_value {
+                Value::String(ref type_name) => {
+                    Ok(try!(self.is_valid_schema_string(type_name)))
+                },
+                Value::Object(_) => {
+                    let schema = Schema::Object(items_value.clone());
+                    Ok(try!(schema.is_valid()))
+                },
+                _ => {
+                    Err(Error::SyntaxError(ErrorCode::NotValidArrayItemsType, 0, 0))
+                }
+            }
+        } else {
+            Err(Error::SyntaxError(ErrorCode::ExpectedItemsAttribute, 0, 0))
         }
     }
 
@@ -361,9 +397,28 @@ impl Schema {
                 Ok(try!(Schema::String(s.clone()).is_valid()))
             },
             Value::Array(ref value_vec) => {
+                // For unions (which are represented by JSON arrays), we have the added
+                // restriction that we can have only one "array" or "map" type within
+                // the union.
+                let mut array_count = 0;
+                let mut map_count = 0;
+
                 for value in value_vec.iter() {
                     try!(self.is_valid_field_type(&value));
+
+                    if let Some(&Value::String(ref type_name)) = value.find("type") {
+                        match type_name.as_ref() {
+                            "array" => { array_count += 1; },
+                            "map"   => { map_count += 1; },
+                            _       => { /* don't care */ },
+                        }
+                    }
                 }
+
+                if array_count > 0 || map_count > 0 {
+                    return Err(Error::SyntaxError(ErrorCode::FieldTooManyElementsOfSameType, 0, 0));
+                }
+
                 Ok(())
             },
             Value::Object(_) => {
@@ -429,22 +484,9 @@ impl Schema {
         default_type_matches_field_type
     }
 
-    fn is_valid_schema_field(&self, field_value: &Value, record_ns: &Option<&String>) -> Result<(),Error> {
-        try!(self.is_valid_field_name(field_value, record_ns));
-
-        // Name was the easy one. Now we need to check the type.
-        let field_type: &Value;
-        if let Some(ref ft) = field_value.find("type") {
-            field_type = ft;
-        } else {
-            return Err(Error::SyntaxError(ErrorCode::ExpectedFieldTypeAttribute, 0, 0));
-        }
-        try!(self.is_valid_field_type(field_type));
-
-        // OK, that wasn't so bad actually. For defaults, we need to match the JSON type
-        // to the Avro type.
-        // TODO: this is just checking type matching, it's not cheching range for number
-        //       values. For bytes, ... it's not clear what the requirement is.
+    // TODO: this is just checking type matching, it's not cheching range for number
+    //       values. For bytes, ... it's not clear what the requirement is.
+    fn is_valid_field_default(&self, field_value: &Value, field_type: &Value) -> Result<(),Error> {
         if let Some(default_value) = field_value.find("default") {
             let mut default_type_matches_field_type = false;
             match *field_type {
@@ -481,6 +523,24 @@ impl Schema {
                 return Err(Error::SyntaxError(ErrorCode::FieldDefaultTypeMismatch, 0, 0));
             }
         }
+        Ok(())
+    }
+
+    fn is_valid_schema_field(&self, field_value: &Value, record_ns: &Option<&String>) -> Result<(),Error> {
+        try!(self.is_valid_field_name(field_value, record_ns));
+
+        // Name was the easy one. Now we need to check the type.
+        let field_type: &Value;
+        if let Some(ref ft) = field_value.find("type") {
+            field_type = ft;
+        } else {
+            return Err(Error::SyntaxError(ErrorCode::ExpectedFieldTypeAttribute, 0, 0));
+        }
+        try!(self.is_valid_field_type(field_type));
+
+        // OK, that wasn't so bad actually. For defaults, we need to match the JSON type
+        // to the Avro type.
+        try!(self.is_valid_field_default(field_value, field_type));
 
         Ok(())
     }

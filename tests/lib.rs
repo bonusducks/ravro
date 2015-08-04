@@ -13,25 +13,49 @@
 // limitations under the License.
 
 // Integration style tests
+
+#[macro_use]
+extern crate lazy_static;
+
+#[macro_use]
+extern crate log;
+extern crate env_logger;
+
 extern crate ravro;
 extern crate serde;
+
+lazy_static! {
+    pub static ref LOGGER_INIT: () = env_logger::init().unwrap();
+}
+
+macro_rules! test {
+    ($f:ident, $body:block) => {
+        #[test]
+        fn $f() {
+            use ::LOGGER_INIT;
+            if *LOGGER_INIT == () {
+                $body
+            } else {
+                panic!("failed to init logging system");
+            }
+        }
+    }
+}
 
 mod primitive {
     mod is_primitive {
         use ravro::schema::Schema;
         use serde::json::{self, Value};
 
-        #[test]
-        fn is_bool() {
+        test!{ is_bool, {
             let s = Schema::String(String::from("boolean"));
             assert!(s.is_primitive());
-        }
+        }}
 
-        #[test]
-        fn is_null() {
+        test!{ is_null, {
             let s = Schema::String(String::from("null"));
             assert!(s.is_primitive());
-        }
+        }}
 
         #[test]
         fn is_int() {
@@ -1138,7 +1162,7 @@ mod object {
         }
 
         mod is_valid {
-            use ravro::schema::{RecordBuilder, Schema};
+            use ravro::schema::{ArrayBuilder, RecordBuilder, Schema};
             use ravro::schema::error::{Error, ErrorCode};
             use serde::json::Value;
 
@@ -1627,6 +1651,39 @@ mod object {
                 let valid = r.is_valid();
                 assert!(valid.is_ok());
             }
+
+            test!{ cannot_have_two_array_types_in_union_type_field, {
+                let a1 = ArrayBuilder::new()
+                    .items(Schema::String(String::from("int")))
+                    .unwrap();
+                let a2 = ArrayBuilder::new()
+                    .items(Schema::String(String::from("string")))
+                    .unwrap();
+
+                let v = vec![a1, a2];
+                let u = Schema::Union(v);
+                let r = RecordBuilder::new()
+                    .name("foo")
+                    .fields(|fab|
+                        fab.push(|fb|
+                            fb
+                                .name("bar")
+                                .field_type(u)
+                        )
+                    )
+                    .unwrap();
+
+                println!("{:?}", r);
+
+                let valid = r.is_valid();
+                assert!(valid.is_err());
+
+                if let Some(Error::SyntaxError(code, _, _)) = valid.err() {
+                    assert_eq!(code, ErrorCode::FieldTooManyElementsOfSameType);
+                } else {
+                    assert!(false);
+                }
+            }}
         }
     }
 
