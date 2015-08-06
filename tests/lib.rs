@@ -1082,7 +1082,7 @@ mod object {
         }
 
         mod is_valid {
-            use ravro::schema::{ArrayBuilder, RecordBuilder, Schema};
+            use ravro::schema::{ArrayBuilder, MapBuilder, RecordBuilder, Schema};
             use ravro::schema::error::{Error, ErrorCode};
             use serde::json::Value;
 
@@ -1569,7 +1569,36 @@ mod object {
                     )
                     .unwrap();
 
-                println!("{:?}", r);
+                let valid = r.is_valid();
+                assert!(valid.is_err());
+
+                if let Some(Error::SyntaxError(code, _, _)) = valid.err() {
+                    assert_eq!(code, ErrorCode::FieldTooManyElementsOfSameType);
+                } else {
+                    assert!(false);
+                }
+            }}
+
+            test!{cannot_have_two_map_types_in_union_type_field, {
+                let a1 = MapBuilder::new()
+                    .values(Schema::String(String::from("int")))
+                    .unwrap();
+                let a2 = MapBuilder::new()
+                    .values(Schema::String(String::from("string")))
+                    .unwrap();
+
+                let v = vec![a1, a2];
+                let u = Schema::Union(v);
+                let r = RecordBuilder::new()
+                    .name("foo")
+                    .fields(|fab|
+                        fab.push(|fb|
+                            fb
+                                .name("bar")
+                                .field_type(u)
+                        )
+                    )
+                    .unwrap();
 
                 let valid = r.is_valid();
                 assert!(valid.is_err());
@@ -1579,6 +1608,31 @@ mod object {
                 } else {
                     assert!(false);
                 }
+            }}
+
+            test!{one_array_one_map_in_union_type_field, {
+                let a1 = MapBuilder::new()
+                    .values(Schema::String(String::from("int")))
+                    .unwrap();
+                let a2 = ArrayBuilder::new()
+                    .items(Schema::String(String::from("string")))
+                    .unwrap();
+
+                let v = vec![a1, a2];
+                let u = Schema::Union(v);
+                let r = RecordBuilder::new()
+                    .name("foo")
+                    .fields(|fab|
+                        fab.push(|fb|
+                            fb
+                                .name("bar")
+                                .field_type(u)
+                        )
+                    )
+                    .unwrap();
+
+                let valid = r.is_valid();
+                assert!(valid.is_ok());
             }}
         }
     }

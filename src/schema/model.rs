@@ -326,7 +326,8 @@ impl Schema {
         if let Some(&Value::String(ref type_name)) = json_val.find("type") {
             match type_name.as_ref() {
                 "record" => Ok(try!(self.is_valid_schema_record(json_val))),
-                "array" => Ok(try!(self.is_valid_array(json_val))),
+                "array"  => Ok(try!(self.is_valid_array(json_val))),
+                "map"    => Ok(try!(self.is_valid_map(json_val))),
                 _ => {
                     // The object '{"type":"<primitive>"}' is a valid representation
                     // of a primitive type, so try to account for that here.
@@ -343,11 +344,37 @@ impl Schema {
         }
     }
 
+    fn is_valid_map(&self, json_val: &Value) -> Result<(),Error> {
+        // Similar to array, we need to verify that there is a "values" attribute and
+        // that it's value is either a string representing a primitive or named schmea,
+        // or it's a full schema object, which needs to be validated recurisvely.
+        debug!("is_valid_map({:?})", json_val);
+
+        if let Some(values_val) = json_val.find("values") {
+            match *values_val {
+                Value::String(ref type_name) => {
+                    Ok(try!(self.is_valid_schema_string(type_name)))
+                },
+                Value::Object(_) => {
+                    let schema = Schema::Object(values_val.clone());
+                    Ok(try!(schema.is_valid()))
+                },
+                _ => {
+                    Err(Error::SyntaxError(ErrorCode::NotValidMapValuesType, 0, 0))
+                }
+            }
+        } else {
+            Err(Error::SyntaxError(ErrorCode::ExpectedValuesAttribute, 0, 0))
+        }
+    }
+
     fn is_valid_array(&self, json_val: &Value) -> Result<(),Error> {
         // All we can really do here is verify that there is an "items" attribute and
         // that it's value is either a string representing a primitive or named
         // schmea, or it's a full schmea object, which needs to be validated
         // unto itself.
+        debug!("is_valid_array({:?})", json_val);
+
         if let Some(items_value) = json_val.find("items") {
             match *items_value {
                 Value::String(ref type_name) => {
@@ -415,7 +442,7 @@ impl Schema {
                     }
                 }
 
-                if array_count > 0 || map_count > 0 {
+                if array_count > 1 || map_count > 1 {
                     return Err(Error::SyntaxError(ErrorCode::FieldTooManyElementsOfSameType, 0, 0));
                 }
 
@@ -468,7 +495,9 @@ impl Schema {
                     }
                 },
                 _ => {
-                    panic!("Can't get here, as is_primitive_type_name() limits the possible values of s");
+                    // Can't get here, as is_primitive_type_name() limits the possible values of s. If
+                    // we have, something has gone horribly, horribly wrong.
+                    unreachable!();
                 }
             }
         } else {
