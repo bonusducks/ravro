@@ -524,7 +524,11 @@ impl Schema {
                     default_type_matches_field_type = self.does_type_name_match_def_value(s, default_value);
                 },
                 Value::Object(_) => {
-                    // TODO
+                    if let Value::Object(_) = *default_value {
+                        // TODO: This is NOT sufficient. Need to actually determine if 
+                        //       the attributes in the type match up with the named record/whatever.
+                        default_type_matches_field_type = true;
+                    }
                 },
                 Value::Array(ref array_vec) => {
                     // Only the first element of the vector is to be considered when determining the default type.
@@ -535,7 +539,11 @@ impl Schema {
                                 return Err(Error::SyntaxError(ErrorCode::CannotNestArrays, 0, 0));
                             },
                             Value::Object(_) => {
-                                // TODO
+                                if let Value::Object(_) = *default_value {
+                                    // TODO: This is NOT sufficient. Need to actually determine if 
+                                    //       the attributes in the type match up with the named record/whatever.
+                                    default_type_matches_field_type = true;
+                                }
                             },
                             Value::String(ref s) => {
                                 default_type_matches_field_type =

@@ -1084,7 +1084,7 @@ mod object {
         mod is_valid {
             use ravro::schema::{ArrayBuilder, MapBuilder, RecordBuilder, Schema};
             use ravro::schema::error::{Error, ErrorCode};
-            use serde::json::Value;
+            use serde::json::{self, Value};
 
             test!{missing_name, {
                 let r = RecordBuilder::new()
@@ -1500,6 +1500,66 @@ mod object {
 
                 // NOTE: This test is going to break once I implement verifything that the
                 //       type name actually exists.
+                let valid = r.is_valid();
+                assert!(valid.is_ok());
+            }}
+
+            test!{bad_default_for_record_type_field, {
+                let r1 = RecordBuilder::new()
+                    .name("bar")
+                    .fields(|fab|
+                        fab.push(|fb|
+                            fb.name("yadda")
+                              .field_type(Schema::String(String::from("string")))
+                        )
+                    )
+                    .unwrap();
+
+                let r = RecordBuilder::new()
+                    .name("foo")
+                    .fields(|fab|
+                        fab.push(|fb|
+                            fb
+                                .name("bar")
+                                .field_type(r1)
+                                .default(Value::String(String::from("broken")))
+                        )
+                    )
+                    .unwrap();
+
+                let valid = r.is_valid();
+                assert!(valid.is_err());
+
+                if let Some(Error::SyntaxError(code, _, _)) = valid.err() {
+                    assert_eq!(code, ErrorCode::FieldDefaultTypeMismatch);
+                } else {
+                    assert!(false);
+                }
+            }}
+
+            test!{good_default_for_record_type_field, {
+                let r1 = RecordBuilder::new()
+                    .name("bar")
+                    .fields(|fab|
+                        fab.push(|fb|
+                            fb.name("yadda")
+                              .field_type(Schema::String(String::from("string")))
+                        )
+                    )
+                    .unwrap();
+
+                let r = RecordBuilder::new()
+                    .name("foo")
+                    .fields(|fab|
+                        fab.push(|fb|
+                            fb
+                                .name("bar")
+                                .field_type(r1)
+                                .default(json::from_str(r#"{"yadda":"blah"}"#).unwrap())
+                        )
+                    )
+                    .unwrap();
+
                 let valid = r.is_valid();
                 assert!(valid.is_ok());
             }}
