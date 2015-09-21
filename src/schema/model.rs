@@ -635,7 +635,7 @@ impl<'a> From<&'a Schema> for String {
             },
             Schema::Union(ref vec) => {
                 let string_vec : Vec<String> = vec.iter().map(|schema| String::from(schema) ).collect();
-                format!("[{}]", string_vec.connect(","))
+                format!("[{}]", string_vec.join(","))
             }
         }
     }
